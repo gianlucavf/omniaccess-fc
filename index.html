@@ -312,6 +312,10 @@ thead th{ background:rgba(255,255,255,.02); }
 .role-sec[data-role="MID"] .role-sub{ color:var(--pos-mid); }
 .role-sec[data-role="FWD"] .role-sub{ color:var(--pos-fwd); }
 .role-sub-n{ color:inherit; opacity:.8; }
+/* jugadores del campo coloreados por su posición */
+.player .role{ color:var(--pc,#e9f4ff); background:color-mix(in srgb, var(--pc,#8595ab) 22%, transparent);
+  padding:1px 8px; border-radius:999px; text-shadow:0 1px 2px rgba(0,0,0,.6); }
+.pos-chip.cat-chip{ color:var(--pc); background:color-mix(in srgb, var(--pc) 16%, transparent); }
 
 /* ===== Barra de próximo partido ===== */
 .matchbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:var(--card-bg);
@@ -731,6 +735,9 @@ const benchList=document.getElementById('benchList');
 const startList=document.getElementById('startList');
 const reserveList=document.getElementById('reserveList');
 const dtList=document.getElementById('dtList');
+/* categoría de posición (para color) a partir de la etiqueta del slot */
+function posCat(lbl){ if(lbl==='POR')return'gk'; if(lbl==='LD'||lbl==='DFC'||lbl==='LI')return'def';
+  if(lbl==='MD'||lbl==='MC'||lbl==='MI')return'mid'; return'fwd'; }
 
 function renderPitch(){
   const f=FORMATIONS[FORMATION];
@@ -740,8 +747,8 @@ function renderPitch(){
     const slot=document.createElement('div');
     slot.className='slot'; slot.style.top=s[0]+'%'; slot.style.left=s[1]+'%'; slot.dataset.slot=i;
     const p=lineup[i]!=null?byId(lineup[i]):null;
-    if(p){const isGk=s[2]==='POR';const badge=p.img?`<img src="${p.img}" alt="">`:jersey(p,isGk);
-      slot.innerHTML=`<div class="player${isGk?' gk':''}" draggable="true" data-pid="${p.id}" data-slot="${i}">
+    if(p){const isGk=s[2]==='POR';const cat=posCat(s[2]);const badge=p.img?`<img src="${p.img}" alt="">`:jersey(p,isGk);
+      slot.innerHTML=`<div class="player${isGk?' gk':''}" draggable="true" data-pid="${p.id}" data-slot="${i}" style="--pc:var(--pos-${cat})">
         <div class="kit">${badge}</div><div class="name">${p.name}</div><div class="role">${s[2]}</div></div>`;
     }else{
       slot.innerHTML=`<div class="player empty"><div class="shirt empty">+</div><div class="role">${s[2]}</div></div>`;
@@ -758,7 +765,7 @@ function renderLists(){
   document.getElementById('startCount').textContent=starters.length+'/'+NSLOTS;
   startList.innerHTML=starters.map(o=>
     `<div class="squad-item" draggable="true" data-pid="${o.p.id}" data-slot="${o.slot}">
-       <span class="num-badge">${o.p.n}</span><span class="bname">${o.p.name}</span><span class="pos-chip">${o.role}</span></div>`).join('')
+       <span class="num-badge">${o.p.n}</span><span class="bname">${o.p.name}</span><span class="pos-chip cat-chip" style="--pc:var(--pos-${posCat(o.role)})">${o.role}</span></div>`).join('')
     ||'<div class="bench-empty">Nadie en el campo</div>';
   // DT / cuerpo técnico
   const staff=SQUAD.filter(p=>dt.has(p.id));
