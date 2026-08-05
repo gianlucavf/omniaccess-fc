@@ -317,6 +317,25 @@ thead th{ background:rgba(255,255,255,.02); }
   padding:1px 8px; border-radius:999px; text-shadow:0 1px 2px rgba(0,0,0,.6); }
 .pos-chip.cat-chip{ color:var(--pc); background:color-mix(in srgb, var(--pc) 16%, transparent); }
 
+/* ===== Novedades — tarjeta de partido ===== */
+.news-wrap{ max-width:640px; margin:0 auto; }
+.match-card{ text-align:center; padding:26px 24px; }
+.mc-tag{ display:inline-block; background:var(--primary); color:#fff; font-family:'Oswald',sans-serif;
+  letter-spacing:1px; text-transform:uppercase; font-size:12px; padding:5px 16px; border-radius:999px; margin-bottom:20px; }
+.mc-teams{ display:flex; align-items:center; justify-content:center; gap:18px; margin-bottom:22px; }
+.mc-team{ display:flex; flex-direction:column; align-items:center; gap:9px; flex:1; max-width:170px; }
+.mc-team img{ height:78px; width:auto; filter:drop-shadow(0 3px 8px rgba(0,0,0,.4)); }
+.mc-team span{ font-family:'Oswald',sans-serif; font-weight:600; text-transform:uppercase; letter-spacing:.5px;
+  color:var(--foreground); font-size:15px; line-height:1.15; }
+.mc-rival{ height:78px; width:78px; border-radius:50%; display:grid; place-items:center;
+  background:var(--surface); border:2px solid var(--divider); color:var(--subhead); font-size:32px; }
+.mc-vs{ font-family:'Oswald',sans-serif; font-weight:700; font-size:22px; color:var(--primary); }
+.mc-info{ display:flex; flex-direction:column; gap:9px; align-items:center;
+  border-top:1px solid var(--divider); padding-top:18px; }
+.mc-info span{ color:var(--body-color); font-size:14px; }
+.mc-info i{ color:var(--primary); margin-right:8px; width:16px; text-align:center; }
+@media (max-width:480px){ .mc-teams{ gap:10px; } .mc-team img,.mc-rival{ height:58px; } .mc-rival{ width:58px; font-size:24px; } .mc-team span{ font-size:13px; } }
+
 /* ===== Barra de próximo partido ===== */
 .matchbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:var(--card-bg);
   border:1px solid var(--divider);border-left:3px solid var(--primary);border-radius:10px;
@@ -587,11 +606,20 @@ html.light .mb-field input{color-scheme:light}
 
   <!-- NOVEDADES -->
   <section class="panel" id="panel-news">
-    <div class="card" style="max-width:760px">
-      <div class="rule-head"><span class="rule-ico ico-info"><i class="fa fa-bell"></i></span>
-        <div><h3>Novedades</h3><p class="note" style="margin:0">Pestaña nueva</p></div></div>
-      <p class="note">Pestaña creada y lista para contenido. Dime qué quieres poner aquí
-         (p. ej. calendario de partidos, resultados, próxima fecha, avisos) y le doy el nombre y el formato que prefieras.</p>
+    <div class="news-wrap">
+      <div class="card match-card">
+        <div class="mc-tag">Primer partido</div>
+        <div class="mc-teams">
+          <div class="mc-team"><img src="assets/crest.png" alt="OmniAccess FC"><span>OmniAccess FC</span></div>
+          <span class="mc-vs">VS</span>
+          <div class="mc-team"><div class="mc-rival"><i class="fa fa-shield-halved"></i></div><span>Wolves Street</span></div>
+        </div>
+        <div class="mc-info">
+          <span><i class="fa fa-calendar-day"></i> Viernes 7 de agosto</span>
+          <span><i class="fa fa-clock"></i> 20:30</span>
+          <span><i class="fa fa-location-dot"></i> Patronato</span>
+        </div>
+      </div>
     </div>
   </section>
 
