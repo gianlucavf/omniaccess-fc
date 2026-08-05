@@ -352,6 +352,10 @@ thead th{ background:rgba(255,255,255,.02); }
 .std tr.us td{ background:color-mix(in srgb, var(--primary) 13%, transparent); box-shadow:inset 3px 0 0 var(--primary); }
 .std tr.us td.tname{ color:var(--primary); }
 .std tr.us td.pts{ color:var(--primary); }
+.std.std-edit td{ padding:5px 6px; }
+.std.std-edit .cell-inp{ padding:6px 7px; }
+.std.std-edit .std-name{ width:150px; }
+.std.std-edit .std-num{ width:54px; text-align:center; }
 
 /* ===== Barra de próximo partido ===== */
 .matchbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:var(--card-bg);
@@ -626,33 +630,14 @@ html.light .mb-field input{color-scheme:light}
   <!-- POSICIONES -->
   <section class="panel" id="panel-table">
     <div class="table-wrap">
-      <h2 class="rules-title" style="border:none;padding-top:0"><i class="fa fa-ranking-star"></i> Posiciones · División C</h2>
-      <div class="std-scroll">
-        <table class="std">
-          <thead><tr><th>#</th><th class="tname">Equipo</th><th>PJ</th><th>PG</th><th>PE</th><th>PP</th><th>GF</th><th>GC</th><th>DG</th><th>Pts</th></tr></thead>
-          <tbody>
-            <tr><td class="pos">1</td><td class="tname">Blanquitos F.C</td><td>1</td><td>1</td><td>0</td><td>0</td><td>11</td><td>6</td><td>+5</td><td class="pts">3</td></tr>
-            <tr><td class="pos">2</td><td class="tname">Pets Places</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td class="pts">0</td></tr>
-            <tr class="us"><td class="pos">3</td><td class="tname">OmniAccess FC</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td class="pts">0</td></tr>
-            <tr><td class="pos">4</td><td class="tname">Bayern de los Caídos</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td class="pts">0</td></tr>
-            <tr><td class="pos">5</td><td class="tname">Wolves Street</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td class="pts">0</td></tr>
-            <tr><td class="pos">6</td><td class="tname">Cojos FC.</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td class="pts">0</td></tr>
-            <tr><td class="pos">7</td><td class="tname">Atlético Barril.</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td class="pts">0</td></tr>
-            <tr><td class="pos">8</td><td class="tname">Guaireña FC</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td class="pts">0</td></tr>
-            <tr><td class="pos">9</td><td class="tname">Esfinter Miami</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td class="pts">0</td></tr>
-            <tr><td class="pos">10</td><td class="tname">Los Isquios</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td class="pts">0</td></tr>
-            <tr><td class="pos">11</td><td class="tname">Olimpo FC</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td class="pts">0</td></tr>
-            <tr><td class="pos">12</td><td class="tname">Matalascañas</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td class="pts">0</td></tr>
-            <tr><td class="pos">13</td><td class="tname">Mallorca City</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td class="pts">0</td></tr>
-            <tr><td class="pos">14</td><td class="tname">San Cris FC</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td class="pts">0</td></tr>
-            <tr><td class="pos">15</td><td class="tname">CD Canan</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td class="pts">0</td></tr>
-            <tr><td class="pos">16</td><td class="tname">Palma United</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td class="pts">0</td></tr>
-            <tr><td class="pos">17</td><td class="tname">Los Gallos FC</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td class="pts">0</td></tr>
-            <tr><td class="pos">18</td><td class="tname">FC Fenix</td><td>1</td><td>0</td><td>0</td><td>1</td><td>6</td><td>11</td><td>−5</td><td class="pts">0</td></tr>
-          </tbody>
-        </table>
+      <div class="toolbar">
+        <h2 class="rules-title" style="border:none;padding-top:0;margin:0"><i class="fa fa-ranking-star"></i> Posiciones · División C</h2>
+        <div class="spacer"></div>
+        <button class="theme-toggle" id="stdAddBtn" style="display:none"><i class="fa fa-plus"></i> Añadir equipo</button>
+        <button class="btn" id="stdEditBtn"><i class="fa fa-lock"></i> Editar</button>
       </div>
-      <p class="note">Cargado a mano desde la tabla oficial (18 equipos). Si hay más equipos o cambian los resultados, pasámelos y actualizo.</p>
+      <div class="std-scroll" id="stdTable"></div>
+      <p class="note" id="stdNote">Pts y DG se calculan solos; la tabla se ordena automáticamente. Pulsá “Editar” (clave admin) para cargar resultados y “Guardar para todos” para publicarlos.</p>
     </div>
   </section>
 
@@ -748,20 +733,31 @@ let reserve=new Set();
 let dt=new Set();
 let match={date:'',time:'',venue:''};
 const cleanMatch=m=>(m&&typeof m==='object')?{date:m.date||'',time:m.time||'',venue:m.venue||''}:{date:'',time:'',venue:''};
+/* tabla de posiciones (División C). Pts/DG se calculan; PJ/PG/PE/PP/GF/GC editables */
+const S=(name,pj,pg,pe,pp,gf,gc)=>({name,pj,pg,pe,pp,gf,gc});
+let standings=[
+  S('Blanquitos F.C',1,1,0,0,11,6), S('Pets Places',0,0,0,0,0,0), S('OmniAccess FC',0,0,0,0,0,0),
+  S('Bayern de los Caídos',0,0,0,0,0,0), S('Wolves Street',0,0,0,0,0,0), S('Cojos FC.',0,0,0,0,0,0),
+  S('Atlético Barril.',0,0,0,0,0,0), S('Guaireña FC',0,0,0,0,0,0), S('Esfinter Miami',0,0,0,0,0,0),
+  S('Los Isquios',0,0,0,0,0,0), S('Olimpo FC',0,0,0,0,0,0), S('Matalascañas',0,0,0,0,0,0),
+  S('Mallorca City',0,0,0,0,0,0), S('San Cris FC',0,0,0,0,0,0), S('CD Canan',0,0,0,0,0,0),
+  S('Palma United',0,0,0,0,0,0), S('Los Gallos FC',0,0,0,0,0,0), S('FC Fenix',1,0,0,1,6,11),
+];
+function cleanStandings(a){ return Array.isArray(a)?a.filter(t=>t&&t.name!=null).map(t=>S(String(t.name),+t.pj||0,+t.pg||0,+t.pe||0,+t.pp||0,+t.gf||0,+t.gc||0)):standings; }
 const byId=id=>SQUAD.find(p=>p.id===id);
-function save(){try{localStorage.setItem('oafc_lineup',JSON.stringify({f:FORMATION,l:lineup,r:[...reserve],d:[...dt],m:match}))}catch(e){}}
+function save(){try{localStorage.setItem('oafc_lineup',JSON.stringify({f:FORMATION,l:lineup,r:[...reserve],d:[...dt],m:match,std:standings}))}catch(e){}}
 function loadState(){try{const d=JSON.parse(localStorage.getItem('oafc_lineup'));
   if(d&&Array.isArray(d.l)&&d.l.length===NSLOTS){FORMATION=(d.f in FORMATIONS)?d.f:'331';
     lineup=d.l.map(x=>(x!=null&&SQUAD.some(p=>p.id===x))?x:null);
     dt=new Set((d.d||[]).filter(x=>SQUAD.some(p=>p.id===x)&&!lineup.includes(x)));
     reserve=new Set((d.r||[]).filter(x=>SQUAD.some(p=>p.id===x)&&!lineup.includes(x)&&!dt.has(x)));
-    match=cleanMatch(d.m);return;}}catch(e){}
+    match=cleanMatch(d.m); if(Array.isArray(d.std))standings=cleanStandings(d.std);return;}}catch(e){}
   FORMATION='331'; lineup=SQUAD.slice(0,NSLOTS).map(p=>p.id); reserve=new Set(); dt=new Set(); match={date:'',time:'',venue:''};}
 
 /* ── shared state via Google Apps Script (read public / write with admin pass) ── */
 const API_URL='https://script.google.com/macros/s/AKfycbwn9Jt7RrUug-c8z3P0ihghap3iXM9zyZFwOxMLe7OAIgs2U2qsfbwqd2Gi6-K0ZhRE2g/exec';
 let lineupEditing=false, adminPass=null;
-function currentState(){return {f:FORMATION,l:lineup,r:[...reserve],d:[...dt],m:match,squad:SQUAD};}
+function currentState(){return {f:FORMATION,l:lineup,r:[...reserve],d:[...dt],m:match,std:standings,squad:SQUAD};}
 function applyState(s){
   if(!s||!Array.isArray(s.l))return false;
   if(Array.isArray(s.squad)&&s.squad.length){
@@ -772,6 +768,7 @@ function applyState(s){
   dt=new Set((s.d||[]).filter(x=>SQUAD.some(p=>p.id===x)&&!lineup.includes(x)));
   reserve=new Set((s.r||[]).filter(x=>SQUAD.some(p=>p.id===x)&&!lineup.includes(x)&&!dt.has(x)));
   match=cleanMatch(s.m);
+  if(Array.isArray(s.std))standings=cleanStandings(s.std);
   return true;
 }
 async function cloudLoad(){
@@ -935,7 +932,29 @@ function renderMatch(){
 matchBar.addEventListener('input',e=>{const t=e.target;
   if(t.id==='mDate')match.date=t.value; else if(t.id==='mTime')match.time=t.value; else if(t.id==='mVenue')match.venue=t.value;
   save();});
-function renderAll(){renderMatch();renderPitch();renderLists();renderSquad();save();}
+/* ── tabla de posiciones ── */
+const stdTable=document.getElementById('stdTable');
+function renderStandings(){
+  if(lineupEditing){
+    stdTable.innerHTML=`<table class="std std-edit"><thead><tr><th class="tname">Equipo</th><th>PJ</th><th>PG</th><th>PE</th><th>PP</th><th>GF</th><th>GC</th><th></th></tr></thead><tbody>${
+      standings.map((t,i)=>`<tr><td><input class="cell-inp std-name" value="${esc(t.name)}" data-i="${i}" data-k="name"></td>`+
+        ['pj','pg','pe','pp','gf','gc'].map(k=>`<td><input class="cell-inp std-num" type="number" min="0" value="${+t[k]||0}" data-i="${i}" data-k="${k}"></td>`).join('')+
+        `<td><button class="row-del" data-stddel="${i}" title="Quitar"><i class="fa fa-trash"></i></button></td></tr>`).join('')}</tbody></table>`;
+    return;
+  }
+  const rows=standings.map(t=>{const pts=3*(+t.pg||0)+(+t.pe||0),dg=(+t.gf||0)-(+t.gc||0);return {...t,pts,dg};});
+  rows.sort((a,b)=>b.pts-a.pts||b.dg-a.dg||b.gf-a.gf);
+  stdTable.innerHTML=`<table class="std"><thead><tr><th>#</th><th class="tname">Equipo</th><th>PJ</th><th>PG</th><th>PE</th><th>PP</th><th>GF</th><th>GC</th><th>DG</th><th>Pts</th></tr></thead><tbody>${
+    rows.map((t,i)=>{const us=t.name==='OmniAccess FC';const dg=t.dg>0?'+'+t.dg:(t.dg<0?'−'+Math.abs(t.dg):'0');
+      return `<tr class="${us?'us':''}"><td class="pos">${i+1}</td><td class="tname">${esc(t.name)}</td><td>${t.pj||0}</td><td>${t.pg||0}</td><td>${t.pe||0}</td><td>${t.pp||0}</td><td>${t.gf||0}</td><td>${t.gc||0}</td><td>${dg}</td><td class="pts">${t.pts}</td></tr>`;}).join('')}</tbody></table>`;
+}
+stdTable.addEventListener('input',e=>{const inp=e.target.closest('.cell-inp');if(!inp)return;
+  const i=+inp.dataset.i,k=inp.dataset.k;
+  if(k==='name')standings[i].name=inp.value; else standings[i][k]=parseInt(inp.value,10)||0;
+  save();});
+stdTable.addEventListener('click',e=>{const d=e.target.closest('[data-stddel]');if(!d)return;
+  standings.splice(+d.dataset.stddel,1);save();renderStandings();});
+function renderAll(){renderMatch();renderPitch();renderLists();renderSquad();renderStandings();save();}
 
 /* ── drag & drop ── */
 let drag=null;   // {pid, from:'bench'|'pitch'|'reserve', slot}
@@ -1008,32 +1027,40 @@ document.addEventListener('dragend',()=>{drag=null;document.querySelectorAll('.d
 document.getElementById('formationSel').onchange=e=>{FORMATION=e.target.value;renderAll();};
 document.getElementById('resetLineup').onclick=()=>{reserve.clear();dt.clear();lineup=SQUAD.slice(0,NSLOTS).map(p=>p.id);renderAll();};
 
-/* ── admin edit / save-for-all ── */
+/* ── admin edit / save-for-all (compartido por Alineación y Posiciones) ── */
 const editLineupBtn=document.getElementById('editLineupBtn');
+const stdEditBtn=document.getElementById('stdEditBtn');
+const stdAddBtn=document.getElementById('stdAddBtn');
 function updateEditUI(){
+  const editHtml='<i class="fa fa-lock"></i> Editar', saveHtml='<i class="fa fa-cloud-arrow-up"></i> Guardar para todos';
   document.getElementById('resetLineup').style.display=lineupEditing?'inline-flex':'none';
-  editLineupBtn.innerHTML=lineupEditing?'<i class="fa fa-cloud-arrow-up"></i> Guardar para todos':'<i class="fa fa-lock"></i> Editar';
-  editLineupBtn.classList.toggle('btn-warn',lineupEditing);
+  editLineupBtn.innerHTML=lineupEditing?saveHtml:editHtml; editLineupBtn.classList.toggle('btn-warn',lineupEditing);
+  if(stdEditBtn){ stdEditBtn.innerHTML=lineupEditing?saveHtml:editHtml; stdEditBtn.classList.toggle('btn-warn',lineupEditing); }
+  if(stdAddBtn) stdAddBtn.style.display=lineupEditing?'inline-flex':'none';
   document.body.classList.toggle('editing-lineup',lineupEditing);
-  renderMatch();
+  renderMatch(); renderStandings();
 }
-editLineupBtn.onclick=async()=>{
+async function saveForAll(){
+  editLineupBtn.disabled=true; if(stdEditBtn)stdEditBtn.disabled=true;
+  try{
+    const j=await cloudSave();
+    if(j&&j.ok){ lineupEditing=false; adminPass=null; editingSquad=false; updateEditUI(); renderAll(); alert('Guardado ✔ Todos verán estos cambios al abrir la web.'); }
+    else if(j&&j.error==='bad_pass'){ alert('Clave de administrador incorrecta. No se guardó.'); }
+    else if(j&&j.error==='sin_confirmacion'){ alert('No se pudo confirmar el guardado. Suele ser por clave admin incorrecta o conexión. Verificá e intentá de nuevo.'); }
+    else { alert('No se pudo guardar: '+((j&&j.error)||'error desconocido')); }
+  }catch(e){ alert('Error de conexión al guardar. Revisá tu internet e intentá de nuevo.'); }
+  editLineupBtn.disabled=false; if(stdEditBtn)stdEditBtn.disabled=false;
+}
+async function editOrSave(){
   if(!lineupEditing){
     const p=prompt('Clave de administrador para editar:');
     if(p==null||p==='')return;
     adminPass=p; lineupEditing=true; updateEditUI();
-  } else {
-    editLineupBtn.disabled=true;
-    try{
-      const j=await cloudSave();
-      if(j&&j.ok){ lineupEditing=false; adminPass=null; editingSquad=false; updateEditUI(); renderAll(); alert('Guardado ✔ Todos verán esta alineación al abrir la web.'); }
-      else if(j&&j.error==='bad_pass'){ alert('Clave de administrador incorrecta. No se guardó.'); }
-      else if(j&&j.error==='sin_confirmacion'){ alert('No se pudo confirmar el guardado. Suele ser por clave admin incorrecta o conexión. Verificá e intentá de nuevo.'); }
-      else { alert('No se pudo guardar: '+((j&&j.error)||'error desconocido')); }
-    }catch(e){ alert('Error de conexión al guardar. Revisá tu internet e intentá de nuevo.'); }
-    editLineupBtn.disabled=false;
-  }
-};
+  } else { await saveForAll(); }
+}
+editLineupBtn.onclick=editOrSave;
+if(stdEditBtn) stdEditBtn.onclick=editOrSave;
+if(stdAddBtn) stdAddBtn.onclick=()=>{ standings.push(S('Nuevo equipo',0,0,0,0,0,0)); save(); renderStandings(); };
 
 /* ── squad edit mode ── */
 const editSquadBtn=document.getElementById('editSquadBtn');
