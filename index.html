@@ -336,6 +336,23 @@ thead th{ background:rgba(255,255,255,.02); }
 .mc-info i{ color:var(--primary); margin-right:8px; width:16px; text-align:center; }
 @media (max-width:480px){ .mc-teams{ gap:10px; } .mc-team img,.mc-rival{ height:58px; } .mc-rival{ width:58px; font-size:24px; } .mc-team span{ font-size:13px; } }
 
+/* ===== Posiciones ===== */
+.table-wrap{ max-width:760px; }
+.std-scroll{ overflow-x:auto; -webkit-overflow-scrolling:touch; border-radius:10px; }
+.std{ width:100%; min-width:520px; border-collapse:collapse; font-size:13px;
+  background:var(--card-bg); border:1px solid var(--divider); border-radius:10px; overflow:hidden; }
+.std thead th{ background:var(--oa-navy); color:#fff; font-family:'Oswald',sans-serif; font-weight:600;
+  font-size:12px; text-transform:uppercase; letter-spacing:.5px; padding:11px 8px; text-align:center; }
+.std th.tname{ text-align:left; }
+.std tbody td{ padding:11px 8px; text-align:center; border-bottom:1px solid var(--divider); color:var(--body-color); }
+.std td.tname{ text-align:left; font-weight:600; color:var(--foreground); white-space:nowrap; }
+.std tbody tr:last-child td{ border-bottom:none; }
+.std .pos{ color:var(--subhead); font-weight:700; }
+.std .pts{ color:var(--foreground); font-weight:700; }
+.std tr.us td{ background:color-mix(in srgb, var(--primary) 13%, transparent); box-shadow:inset 3px 0 0 var(--primary); }
+.std tr.us td.tname{ color:var(--primary); }
+.std tr.us td.pts{ color:var(--primary); }
+
 /* ===== Barra de próximo partido ===== */
 .matchbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:var(--card-bg);
   border:1px solid var(--divider);border-left:3px solid var(--primary);border-radius:10px;
@@ -426,6 +443,7 @@ html.light .mb-field input{color-scheme:light}
 <nav class="tabs" id="tabs">
   <button class="tab active" data-panel="formation"><i class="fa fa-futbol"></i>Alineación</button>
   <button class="tab" data-panel="squad"><i class="fa fa-users"></i>Plantilla</button>
+  <button class="tab" data-panel="table"><i class="fa fa-ranking-star"></i>Posiciones</button>
   <button class="tab" data-panel="rules"><i class="fa fa-scroll"></i>Reglamento</button>
   <button class="tab" data-panel="news"><i class="fa fa-bell"></i>Novedades</button>
   <button class="tab" data-panel="about"><i class="fa fa-circle-info"></i>Info</button>
@@ -601,6 +619,28 @@ html.light .mb-field input{color-scheme:light}
            jornada se desarrolle con organización, respeto y puntualidad. <b>¡Muchos éxitos y que tengamos
            una gran Copa SEPTEN!</b></p>
       </div>
+    </div>
+  </section>
+
+  <!-- NOVEDADES -->
+  <!-- POSICIONES -->
+  <section class="panel" id="panel-table">
+    <div class="table-wrap">
+      <h2 class="rules-title" style="border:none;padding-top:0"><i class="fa fa-ranking-star"></i> Posiciones · División C</h2>
+      <div class="std-scroll">
+        <table class="std">
+          <thead><tr><th>#</th><th class="tname">Equipo</th><th>PJ</th><th>PG</th><th>PE</th><th>PP</th><th>GF</th><th>GC</th><th>DG</th><th>Pts</th></tr></thead>
+          <tbody>
+            <tr><td class="pos">1</td><td class="tname">Blanquitos F.C</td><td>1</td><td>1</td><td>0</td><td>0</td><td>11</td><td>6</td><td>+5</td><td class="pts">3</td></tr>
+            <tr><td class="pos">2</td><td class="tname">Pets Places</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td class="pts">0</td></tr>
+            <tr class="us"><td class="pos">3</td><td class="tname">OmniAccess FC</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td class="pts">0</td></tr>
+            <tr><td class="pos">4</td><td class="tname">Bayern de los Caídos</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td class="pts">0</td></tr>
+            <tr><td class="pos">5</td><td class="tname">Wolves Street</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td class="pts">0</td></tr>
+            <tr><td class="pos">6</td><td class="tname">Cojos FC.</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td class="pts">0</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="note">Cargado a mano desde la tabla oficial. Falta el equipo Nº 7 (quedó cortado en la captura) — pasámelo y lo agrego.</p>
     </div>
   </section>
 
