@@ -313,6 +313,26 @@ thead th{ background:rgba(255,255,255,.02); }
 .role-sec[data-role="FWD"] .role-sub{ color:var(--pos-fwd); }
 .role-sub-n{ color:inherit; opacity:.8; }
 
+/* ===== Barra de próximo partido ===== */
+.matchbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:var(--card-bg);
+  border:1px solid var(--divider);border-left:3px solid var(--primary);border-radius:10px;
+  padding:11px 14px;margin-bottom:14px}
+.matchbar .mb-ico{color:var(--primary);font-size:15px}
+.mb-label{font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--subhead);font-weight:700}
+.mb-when{font-weight:700;color:var(--foreground);font-size:15px}
+.mb-venue-txt{color:var(--body-color);font-size:13px}
+.mb-venue-txt i{color:var(--primary);margin-right:4px}
+.mb-empty{color:var(--muted);font-style:italic}
+.matchbar.editing{gap:14px}
+.mb-field{display:flex;flex-direction:column;gap:5px;font-size:10.5px;text-transform:uppercase;
+  letter-spacing:.5px;color:var(--subhead);font-weight:600}
+.mb-field input{background:var(--surface);border:1px solid var(--divider);color:var(--foreground);
+  border-radius:7px;padding:7px 9px;font-family:inherit;font-size:13px;color-scheme:dark}
+html.light .mb-field input{color-scheme:light}
+.mb-field input:focus{outline:none;border-color:var(--primary)}
+.mb-venue{flex:1;min-width:170px}
+@media (max-width:640px){.mb-field.mb-venue{flex:1 1 100%}}
+
 /* ===== Compactación general ===== */
 .bench-head{ margin-bottom:8px; }
 .squad-list,.bench-list{ gap:7px; }
@@ -391,6 +411,7 @@ thead th{ background:rgba(255,255,255,.02); }
 <div class="wrap">
   <!-- FORMATION -->
   <section class="panel active" id="panel-formation">
+    <div class="matchbar" id="matchBar"></div>
     <div class="toolbar">
       <span class="field-label">Formación</span>
       <select class="pill" id="formationSel">
@@ -641,19 +662,22 @@ let FORMATION='331';
 let lineup=[];
 let reserve=new Set();
 let dt=new Set();
+let match={date:'',time:'',venue:''};
+const cleanMatch=m=>(m&&typeof m==='object')?{date:m.date||'',time:m.time||'',venue:m.venue||''}:{date:'',time:'',venue:''};
 const byId=id=>SQUAD.find(p=>p.id===id);
-function save(){try{localStorage.setItem('oafc_lineup',JSON.stringify({f:FORMATION,l:lineup,r:[...reserve],d:[...dt]}))}catch(e){}}
+function save(){try{localStorage.setItem('oafc_lineup',JSON.stringify({f:FORMATION,l:lineup,r:[...reserve],d:[...dt],m:match}))}catch(e){}}
 function loadState(){try{const d=JSON.parse(localStorage.getItem('oafc_lineup'));
   if(d&&Array.isArray(d.l)&&d.l.length===NSLOTS){FORMATION=(d.f in FORMATIONS)?d.f:'331';
     lineup=d.l.map(x=>(x!=null&&SQUAD.some(p=>p.id===x))?x:null);
     dt=new Set((d.d||[]).filter(x=>SQUAD.some(p=>p.id===x)&&!lineup.includes(x)));
-    reserve=new Set((d.r||[]).filter(x=>SQUAD.some(p=>p.id===x)&&!lineup.includes(x)&&!dt.has(x)));return;}}catch(e){}
-  FORMATION='331'; lineup=SQUAD.slice(0,NSLOTS).map(p=>p.id); reserve=new Set(); dt=new Set();}
+    reserve=new Set((d.r||[]).filter(x=>SQUAD.some(p=>p.id===x)&&!lineup.includes(x)&&!dt.has(x)));
+    match=cleanMatch(d.m);return;}}catch(e){}
+  FORMATION='331'; lineup=SQUAD.slice(0,NSLOTS).map(p=>p.id); reserve=new Set(); dt=new Set(); match={date:'',time:'',venue:''};}
 
 /* ── shared state via Google Apps Script (read public / write with admin pass) ── */
 const API_URL='https://script.google.com/macros/s/AKfycbwn9Jt7RrUug-c8z3P0ihghap3iXM9zyZFwOxMLe7OAIgs2U2qsfbwqd2Gi6-K0ZhRE2g/exec';
 let lineupEditing=false, adminPass=null;
-function currentState(){return {f:FORMATION,l:lineup,r:[...reserve],d:[...dt],squad:SQUAD};}
+function currentState(){return {f:FORMATION,l:lineup,r:[...reserve],d:[...dt],m:match,squad:SQUAD};}
 function applyState(s){
   if(!s||!Array.isArray(s.l))return false;
   if(Array.isArray(s.squad)&&s.squad.length){
@@ -663,6 +687,7 @@ function applyState(s){
   lineup=(s.l.length===NSLOTS?s.l:SQUAD.slice(0,NSLOTS).map(p=>p.id)).map(x=>(x!=null&&SQUAD.some(p=>p.id===x))?x:null);
   dt=new Set((s.d||[]).filter(x=>SQUAD.some(p=>p.id===x)&&!lineup.includes(x)));
   reserve=new Set((s.r||[]).filter(x=>SQUAD.some(p=>p.id===x)&&!lineup.includes(x)&&!dt.has(x)));
+  match=cleanMatch(s.m);
   return true;
 }
 async function cloudLoad(){
@@ -790,7 +815,40 @@ function renderSquad(){
       <td><span class="pos-chip${starter?'':' bench'}">${posLabel}</span></td>
       <td>${estado}</td></tr>`;}).join('');
 }
-function renderAll(){renderPitch();renderLists();renderSquad();save();}
+const matchBar=document.getElementById('matchBar');
+function fmtMatchWhen(){
+  const parts=[];
+  if(match.date){const p=match.date.split('-');
+    if(p.length===3){const d=new Date(+p[0],+p[1]-1,+p[2]);
+      const dias=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'],mes=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+      if(!isNaN(d)) parts.push(dias[d.getDay()]+' '+(+p[2])+' '+mes[+p[1]-1]);}}
+  if(match.time)parts.push(match.time);
+  return parts.join(' · ');
+}
+function renderMatch(){
+  if(lineupEditing){
+    matchBar.classList.add('editing');
+    matchBar.innerHTML=`<span class="mb-ico"><i class="fa fa-calendar-day"></i></span>
+      <label class="mb-field">Fecha<input type="date" id="mDate" value="${match.date||''}"></label>
+      <label class="mb-field">Hora<input type="time" id="mTime" value="${match.time||''}"></label>
+      <label class="mb-field mb-venue">Cancha / lugar<input type="text" id="mVenue" placeholder="Ej.: Cancha 3 · Complejo…" value="${esc(match.venue||'')}"></label>`;
+  } else {
+    matchBar.classList.remove('editing');
+    const when=fmtMatchWhen();
+    if(!when&&!match.venue){
+      matchBar.innerHTML=`<span class="mb-ico"><i class="fa fa-calendar-day"></i></span><span class="mb-empty">Próximo partido — sin definir</span>`;
+    } else {
+      matchBar.innerHTML=`<span class="mb-ico"><i class="fa fa-calendar-day"></i></span>
+        <span class="mb-label">Próximo partido</span>
+        ${when?`<span class="mb-when">${when}</span>`:''}
+        ${match.venue?`<span class="mb-venue-txt"><i class="fa fa-location-dot"></i> ${esc(match.venue)}</span>`:''}`;
+    }
+  }
+}
+matchBar.addEventListener('input',e=>{const t=e.target;
+  if(t.id==='mDate')match.date=t.value; else if(t.id==='mTime')match.time=t.value; else if(t.id==='mVenue')match.venue=t.value;
+  save();});
+function renderAll(){renderMatch();renderPitch();renderLists();renderSquad();save();}
 
 /* ── drag & drop ── */
 let drag=null;   // {pid, from:'bench'|'pitch'|'reserve', slot}
@@ -870,6 +928,7 @@ function updateEditUI(){
   editLineupBtn.innerHTML=lineupEditing?'<i class="fa fa-cloud-arrow-up"></i> Guardar para todos':'<i class="fa fa-lock"></i> Editar';
   editLineupBtn.classList.toggle('btn-warn',lineupEditing);
   document.body.classList.toggle('editing-lineup',lineupEditing);
+  renderMatch();
 }
 editLineupBtn.onclick=async()=>{
   if(!lineupEditing){
