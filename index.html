@@ -211,6 +211,9 @@ body.editing-lineup .pitch-card{outline:2px solid var(--warning);outline-offset:
 .cell-inp{background:var(--surface);border:1px solid var(--divider);color:var(--foreground);border-radius:6px;
   padding:7px 9px;font-family:inherit;font-size:13px;width:100%}
 .cell-inp.num{width:74px}
+#squadTable th.sortable{cursor:pointer;user-select:none;white-space:nowrap}
+#squadTable th.sortable:hover{color:var(--foreground)}
+.sarr{color:var(--primary);font-size:11px}
 .cell-inp:focus{outline:none;border-color:var(--primary)}
 .row-del{background:none;border:1px solid var(--divider);color:var(--danger);width:34px;height:34px;
   border-radius:6px;cursor:pointer}
@@ -541,8 +544,13 @@ html.light .mb-field input,html.light .mb-field select{color-scheme:light}
       <div class="spacer"></div>
       <span class="note" id="squadCount"></span>
     </div>
-    <table>
-      <thead><tr><th style="width:70px">#</th><th>Jugador</th><th>Posición</th><th>Estado</th></tr></thead>
+    <table id="squadTable">
+      <thead><tr>
+        <th class="sortable" data-sk="n" style="width:70px">#<span class="sarr"></span></th>
+        <th class="sortable" data-sk="name">Jugador<span class="sarr"></span></th>
+        <th class="sortable" data-sk="pos">Posición<span class="sarr"></span></th>
+        <th class="sortable" data-sk="status">Estado<span class="sarr"></span></th>
+      </tr></thead>
       <tbody id="squadBody"></tbody>
     </table>
   </section>
@@ -905,6 +913,8 @@ function cycleRole(id){const p=byId(id);if(!p)return;
   p.role=ROLE_KEYS[(i+1)%ROLE_KEYS.length];saveSquad();renderLists();if(editingSquad)renderSquad();}
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');}
 let editingSquad=false;
+let squadSort={key:null,dir:1};
+const CATRANK={gk:0,def:1,mid:2,fwd:3}, ROLERANK={GK:0,DEF:1,MID:2,FWD:3};
 function renderSquad(){
   const f=FORMATIONS[FORMATION]; const roleOf={};
   lineup.forEach((pid,i)=>{if(pid!=null)roleOf[pid]=f.slots[i][2];});
@@ -918,17 +928,40 @@ function renderSquad(){
         <td><input class="cell-inp" type="text" value="${esc(p.name)}" data-idx="${idx}" data-k="name"></td>
         <td><select class="cell-inp role" data-idx="${idx}" data-k="role">${opts}</select></td>
         <td style="text-align:right"><button class="row-del" data-del="${idx}" title="Remove"><i class="fa fa-trash"></i></button></td></tr>`;}).join('');
-    return;
+    updateSortArrows(); return;
   }
-  tb.innerHTML=SQUAD.map(p=>{
+  let rows=SQUAD.map(p=>{
     const role=roleOf[p.id], starter=!!role, resv=reserve.has(p.id), isdt=dt.has(p.id);
     const posLabel=isdt?'DT':(starter?role:roleAb(p.role));
+    const posRank=isdt?9:(starter?(CATRANK[posCat(role)]??2):(ROLERANK[p.role]??2));
     const estado=isdt?'Cuerpo técnico':(starter?'Titular':(resv?'Reserva':'Suplente'));
+    const statusRank=isdt?3:(starter?0:(resv?2:1));
+    return {p,starter,posLabel,posRank,estado,statusRank};
+  });
+  if(squadSort.key){const k=squadSort.key,d=squadSort.dir;
+    rows.sort((a,b)=>{let c;
+      if(k==='name')c=a.p.name.localeCompare(b.p.name,'es');
+      else if(k==='n')c=a.p.n-b.p.n;
+      else if(k==='pos')c=(a.posRank-b.posRank)||(a.p.n-b.p.n);
+      else c=(a.statusRank-b.statusRank)||(a.p.n-b.p.n);
+      return c*d;});}
+  tb.innerHTML=rows.map(r=>{const p=r.p;
     return `<tr><td><span class="num-badge">${p.n}</span></td>
-      <td><span class="pname">${p.name}</span></td>
-      <td><span class="pos-chip${starter?'':' bench'}">${posLabel}</span></td>
-      <td>${estado}</td></tr>`;}).join('');
+      <td><span class="pname">${esc(p.name)}</span></td>
+      <td><span class="pos-chip${r.starter?'':' bench'}">${r.posLabel}</span></td>
+      <td>${r.estado}</td></tr>`;}).join('');
+  updateSortArrows();
 }
+function updateSortArrows(){
+  document.querySelectorAll('#squadTable th.sortable').forEach(th=>{
+    const s=th.querySelector('.sarr');
+    s.textContent=(!editingSquad&&squadSort.key===th.dataset.sk)?(squadSort.dir>0?' ▲':' ▼'):'';});
+}
+document.querySelectorAll('#squadTable th.sortable').forEach(th=>th.addEventListener('click',()=>{
+  if(editingSquad)return;
+  const k=th.dataset.sk;
+  if(squadSort.key===k)squadSort.dir*=-1; else {squadSort.key=k;squadSort.dir=1;}
+  renderSquad();}));
 const matchBar=document.getElementById('matchBar');
 function fmtMatchDate(){
   if(!match.date)return'';
