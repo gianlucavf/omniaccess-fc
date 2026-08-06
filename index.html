@@ -322,6 +322,23 @@ thead th{ background:rgba(255,255,255,.02); }
 
 /* ===== Novedades — tarjeta de partido ===== */
 .news-wrap{ max-width:640px; margin:0 auto; }
+/* fixture */
+.fixture-list{display:flex;flex-direction:column;gap:6px}
+.fx-row{display:flex;align-items:center;gap:10px;padding:9px 11px;background:var(--surface);
+  border:1px solid var(--divider);border-radius:9px}
+.fx-j{flex:0 0 22px;text-align:center;color:var(--subhead);font-weight:700;font-size:12px}
+.fx-badge{flex:0 0 22px;height:22px;border-radius:6px;display:grid;place-items:center;font-weight:700;font-size:11px}
+.fx-home{background:color-mix(in srgb,var(--success) 20%,transparent);color:var(--success)}
+.fx-away{background:color-mix(in srgb,var(--warning) 22%,transparent);color:var(--warning)}
+.fx-match{flex:1;min-width:0;font-size:13px;color:var(--foreground)}
+.fx-match .fx-vs{color:var(--subhead);font-weight:400;font-size:12px;margin:0 2px}
+.fx-when{color:var(--body-color);font-size:12.5px;white-space:nowrap}
+.fx-when.fx-tbd{color:var(--muted);font-style:italic}
+.fx-erow{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:8px;background:var(--surface);
+  border:1px solid var(--divider);border-radius:9px}
+.fx-erow .fx-in{padding:6px 7px;font-size:12px;min-width:0}
+.fx-erow .fx-t{width:96px}
+.fx-erow select.fx-in{max-width:160px}
 .ics-line{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .ics-line code{background:var(--surface);border:1px solid var(--divider);border-radius:6px;padding:6px 9px;font-size:12px;color:var(--body-color)}
 .match-card{ text-align:center; padding:26px 24px; }
@@ -684,7 +701,17 @@ html.light .mb-field input,html.light .mb-field select{color-scheme:light}
         <div class="rule-head"><span class="rule-ico ico-info"><i class="fa fa-bullhorn"></i></span>
           <div><h3>Novedades</h3><p class="note" style="margin:0">Fixture y avisos</p></div></div>
         <p>El <b>próximo partido</b> aparece siempre arriba de todo en la pestaña <b>Alineación</b> y se actualiza cuando el admin lo edita.</p>
-        <p class="note">El <b>fixture completo</b> del torneo se cargará acá en cuanto estén confirmadas las fechas y horas de cada jornada.</p>
+      </div>
+
+      <div class="card" style="margin-top:16px">
+        <div class="toolbar" style="margin-bottom:6px">
+          <h3 style="margin:0"><i class="fa fa-list-ol" style="color:var(--primary);margin-right:8px"></i>Fixture · Copa SEPTEN</h3>
+          <div class="spacer"></div>
+          <button class="theme-toggle" id="fxAddBtn" style="display:none"><i class="fa fa-plus"></i> Añadir partido</button>
+          <button class="btn" id="fxEditBtn"><i class="fa fa-lock"></i> Editar</button>
+        </div>
+        <p class="note" style="margin:0 0 10px">Local (L) / Visitante (V). Fechas y horas <b>a confirmar</b> por jornada — el admin las va completando.</p>
+        <div id="fixtureList" class="fixture-list"></div>
       </div>
 
       <div class="card" style="margin-top:16px">
@@ -789,20 +816,31 @@ let standings=[
   S('Palma United',0,0,0,0,0,0), S('Los Gallos FC',0,0,0,0,0,0), S('FC Fenix',1,0,0,1,6,11),
 ];
 function cleanStandings(a){ return Array.isArray(a)?a.filter(t=>t&&t.name!=null).map(t=>S(String(t.name),+t.pj||0,+t.pg||0,+t.pe||0,+t.pp||0,+t.gf||0,+t.gc||0)):standings; }
+/* fixture del torneo (orden cronológico). home=true → OmniAccess local */
+const FX=(rival,home,date,time,arrival,venue)=>({rival,home,date:date||'',time:time||'',arrival:arrival||'',venue:venue||''});
+let fixture=[
+  FX('Wolves Street',true,'2026-08-07','21:15','20:30','Campo Patronato (Palma)'),
+  FX('Pets Places',false), FX('CD Canan',false), FX('Cojos FC.',false), FX('Blanquitos F.C',false),
+  FX('Matalascañas',false), FX('Guaireña FC',false), FX('San Cris FC',false), FX('Mallorca City',false),
+  FX('Los Isquios',true), FX('Esfinter Miami',true), FX('Los Gallos FC',true), FX('FC Fenix',true),
+  FX('Palma United',true), FX('Bayern de los Caídos',true), FX('Olimpo FC',true), FX('Atlético Barril.',false),
+];
+function cleanFixture(a){ return Array.isArray(a)?a.map(f=>FX(String(f.rival||''),!!f.home,f.date,f.time,f.arrival,f.venue)):fixture; }
 const byId=id=>SQUAD.find(p=>p.id===id);
-function save(){try{localStorage.setItem('oafc_lineup',JSON.stringify({f:FORMATION,l:lineup,r:[...reserve],d:[...dt],m:match,std:standings}))}catch(e){}}
+function save(){try{localStorage.setItem('oafc_lineup',JSON.stringify({f:FORMATION,l:lineup,r:[...reserve],d:[...dt],m:match,std:standings,fx:fixture}))}catch(e){}}
 function loadState(){try{const d=JSON.parse(localStorage.getItem('oafc_lineup'));
   if(d&&Array.isArray(d.l)&&d.l.length===NSLOTS){FORMATION=(d.f in FORMATIONS)?d.f:'331';
     lineup=d.l.map(x=>(x!=null&&SQUAD.some(p=>p.id===x))?x:null);
     dt=new Set((d.d||[]).filter(x=>SQUAD.some(p=>p.id===x)&&!lineup.includes(x)));
     reserve=new Set((d.r||[]).filter(x=>SQUAD.some(p=>p.id===x)&&!lineup.includes(x)&&!dt.has(x)));
-    match=cleanMatch(d.m); if(Array.isArray(d.std))standings=cleanStandings(d.std);return;}}catch(e){}
+    match=cleanMatch(d.m); if(Array.isArray(d.std))standings=cleanStandings(d.std);
+    if(Array.isArray(d.fx))fixture=cleanFixture(d.fx);return;}}catch(e){}
   FORMATION='331'; lineup=SQUAD.slice(0,NSLOTS).map(p=>p.id); reserve=new Set(); dt=new Set(); match={date:'',time:'',venue:''};}
 
 /* ── shared state via Google Apps Script (read public / write with admin pass) ── */
 const API_URL='https://script.google.com/macros/s/AKfycbwn9Jt7RrUug-c8z3P0ihghap3iXM9zyZFwOxMLe7OAIgs2U2qsfbwqd2Gi6-K0ZhRE2g/exec';
 let lineupEditing=false, adminPass=null;
-function currentState(){return {f:FORMATION,l:lineup,r:[...reserve],d:[...dt],m:match,std:standings,squad:SQUAD};}
+function currentState(){return {f:FORMATION,l:lineup,r:[...reserve],d:[...dt],m:match,std:standings,fx:fixture,squad:SQUAD};}
 function applyState(s){
   if(!s||!Array.isArray(s.l))return false;
   if(Array.isArray(s.squad)&&s.squad.length){
@@ -814,6 +852,7 @@ function applyState(s){
   reserve=new Set((s.r||[]).filter(x=>SQUAD.some(p=>p.id===x)&&!lineup.includes(x)&&!dt.has(x)));
   match=cleanMatch(s.m);
   if(Array.isArray(s.std))standings=cleanStandings(s.std);
+  if(Array.isArray(s.fx))fixture=cleanFixture(s.fx);
   return true;
 }
 let lastCloudRaw='';
@@ -984,13 +1023,48 @@ document.querySelectorAll('#squadTable th.sortable').forEach(th=>th.addEventList
   if(squadSort.key===k)squadSort.dir*=-1; else {squadSort.key=k;squadSort.dir=1;}
   renderSquad();}));
 const matchBar=document.getElementById('matchBar');
-function fmtMatchDate(){
-  if(!match.date)return'';
-  const p=match.date.split('-'); if(p.length!==3)return'';
+function fmtDateStr(str){
+  if(!str)return''; const p=str.split('-'); if(p.length!==3)return'';
   const d=new Date(+p[0],+p[1]-1,+p[2]); if(isNaN(d))return'';
   const dias=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'],mes=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
   return dias[d.getDay()]+' '+(+p[2])+' '+mes[+p[1]-1];
 }
+function fmtMatchDate(){ return fmtDateStr(match.date); }
+const fixtureList=document.getElementById('fixtureList');
+function renderFixture(){
+  if(!fixtureList)return;
+  if(lineupEditing){
+    const rivalOpts=f=>standings.map(t=>t.name).filter(n=>n!=='OmniAccess FC')
+      .map(n=>`<option value="${esc(n)}"${f.rival===n?' selected':''}>${esc(n)}</option>`).join('');
+    const venOpts=f=>VENUES.map(v=>`<option value="${esc(v.name)}"${f.venue===v.name?' selected':''}>${esc(v.name)}</option>`).join('');
+    fixtureList.innerHTML=fixture.map((f,i)=>`<div class="fx-erow">
+      <span class="fx-j">${i+1}</span>
+      <select class="cell-inp fx-in" data-i="${i}" data-k="rival"><option value="">Rival…</option>${rivalOpts(f)}</select>
+      <select class="cell-inp fx-in fx-lv" data-i="${i}" data-k="home"><option value="1"${f.home?' selected':''}>Local</option><option value="0"${!f.home?' selected':''}>Visitante</option></select>
+      <input class="cell-inp fx-in" type="date" data-i="${i}" data-k="date" value="${f.date||''}">
+      <input class="cell-inp fx-in fx-t" type="time" data-i="${i}" data-k="time" value="${f.time||''}" title="Hora partido">
+      <input class="cell-inp fx-in fx-t" type="time" data-i="${i}" data-k="arrival" value="${f.arrival||''}" title="Llegada">
+      <select class="cell-inp fx-in" data-i="${i}" data-k="venue"><option value="">Cancha…</option>${venOpts(f)}</select>
+      <button class="row-del" data-fxdel="${i}" title="Quitar"><i class="fa fa-trash"></i></button>
+    </div>`).join('');
+    return;
+  }
+  fixtureList.innerHTML=fixture.map((f,i)=>{
+    const dstr=fmtDateStr(f.date);
+    const when=(dstr||f.time)?(dstr+(f.time?(dstr?' · ':'')+f.time:'')):'A definir';
+    return `<div class="fx-row">
+      <span class="fx-j">${i+1}</span>
+      <span class="fx-badge ${f.home?'fx-home':'fx-away'}" title="${f.home?'Local':'Visitante'}">${f.home?'L':'V'}</span>
+      <span class="fx-match"><b>OmniAccess FC</b> <span class="fx-vs">vs</span> ${esc(f.rival||'—')}</span>
+      <span class="fx-when${(dstr||f.time)?'':' fx-tbd'}">${when}</span>
+    </div>`;}).join('');
+}
+fixtureList&&fixtureList.addEventListener('input',e=>{const el=e.target.closest('.fx-in');if(!el)return;
+  const i=+el.dataset.i,k=el.dataset.k;
+  if(k==='home')fixture[i].home=(el.value==='1'); else fixture[i][k]=el.value;
+  save();});
+fixtureList&&fixtureList.addEventListener('click',e=>{const d=e.target.closest('[data-fxdel]');if(!d)return;
+  fixture.splice(+d.dataset.fxdel,1);save();renderFixture();});
 function pad2(n){return String(n).padStart(2,'0');}
 function gcalHref(){
   if(!match.date||!match.time)return '';
@@ -1070,7 +1144,7 @@ stdTable.addEventListener('input',e=>{const inp=e.target.closest('.cell-inp');if
   save();});
 stdTable.addEventListener('click',e=>{const d=e.target.closest('[data-stddel]');if(!d)return;
   standings.splice(+d.dataset.stddel,1);save();renderStandings();});
-function renderAll(){renderMatch();renderPitch();renderLists();renderSquad();renderStandings();save();}
+function renderAll(){renderMatch();renderPitch();renderLists();renderSquad();renderStandings();renderFixture();save();}
 
 /* ── drag & drop ── */
 let drag=null;   // {pid, from:'bench'|'pitch'|'reserve', slot}
@@ -1147,17 +1221,21 @@ document.getElementById('resetLineup').onclick=()=>{reserve.clear();dt.clear();l
 const editLineupBtn=document.getElementById('editLineupBtn');
 const stdEditBtn=document.getElementById('stdEditBtn');
 const stdAddBtn=document.getElementById('stdAddBtn');
+const fxEditBtn=document.getElementById('fxEditBtn');
+const fxAddBtn=document.getElementById('fxAddBtn');
 function updateEditUI(){
   const editHtml='<i class="fa fa-lock"></i> Editar', saveHtml='<i class="fa fa-cloud-arrow-up"></i> Guardar para todos';
   document.getElementById('resetLineup').style.display=lineupEditing?'inline-flex':'none';
   editLineupBtn.innerHTML=lineupEditing?saveHtml:editHtml; editLineupBtn.classList.toggle('btn-warn',lineupEditing);
   if(stdEditBtn){ stdEditBtn.innerHTML=lineupEditing?saveHtml:editHtml; stdEditBtn.classList.toggle('btn-warn',lineupEditing); }
   if(stdAddBtn) stdAddBtn.style.display=lineupEditing?'inline-flex':'none';
+  if(fxEditBtn){ fxEditBtn.innerHTML=lineupEditing?saveHtml:editHtml; fxEditBtn.classList.toggle('btn-warn',lineupEditing); }
+  if(fxAddBtn) fxAddBtn.style.display=lineupEditing?'inline-flex':'none';
   document.body.classList.toggle('editing-lineup',lineupEditing);
-  renderMatch(); renderStandings();
+  renderMatch(); renderStandings(); renderFixture();
 }
 async function saveForAll(){
-  editLineupBtn.disabled=true; if(stdEditBtn)stdEditBtn.disabled=true;
+  [editLineupBtn,stdEditBtn,fxEditBtn].forEach(b=>b&&(b.disabled=true));
   try{
     const j=await cloudSave();
     if(j&&j.ok){ lineupEditing=false; adminPass=null; editingSquad=false; updateEditUI(); renderAll(); alert('Guardado ✔ Todos verán estos cambios al abrir la web.'); }
@@ -1165,7 +1243,7 @@ async function saveForAll(){
     else if(j&&j.error==='sin_confirmacion'){ alert('No se pudo confirmar el guardado. Suele ser por clave admin incorrecta o conexión. Verificá e intentá de nuevo.'); }
     else { alert('No se pudo guardar: '+((j&&j.error)||'error desconocido')); }
   }catch(e){ alert('Error de conexión al guardar. Revisá tu internet e intentá de nuevo.'); }
-  editLineupBtn.disabled=false; if(stdEditBtn)stdEditBtn.disabled=false;
+  [editLineupBtn,stdEditBtn,fxEditBtn].forEach(b=>b&&(b.disabled=false));
 }
 async function editOrSave(){
   if(!lineupEditing){
@@ -1177,6 +1255,8 @@ async function editOrSave(){
 editLineupBtn.onclick=editOrSave;
 if(stdEditBtn) stdEditBtn.onclick=editOrSave;
 if(stdAddBtn) stdAddBtn.onclick=()=>{ standings.push(S('Nuevo equipo',0,0,0,0,0,0)); save(); renderStandings(); };
+if(fxEditBtn) fxEditBtn.onclick=editOrSave;
+if(fxAddBtn) fxAddBtn.onclick=()=>{ fixture.push(FX('',true)); save(); renderFixture(); };
 
 /* ── squad edit mode ── */
 const editSquadBtn=document.getElementById('editSquadBtn');
