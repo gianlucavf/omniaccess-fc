@@ -375,11 +375,15 @@ thead th{ background:rgba(255,255,255,.02); }
 .matchbar.editing{gap:14px}
 .mb-field{display:flex;flex-direction:column;gap:5px;font-size:10.5px;text-transform:uppercase;
   letter-spacing:.5px;color:var(--subhead);font-weight:600}
-.mb-field input{background:var(--surface);border:1px solid var(--divider);color:var(--foreground);
+.mb-field input,.mb-field select{background:var(--surface);border:1px solid var(--divider);color:var(--foreground);
   border-radius:7px;padding:7px 9px;font-family:inherit;font-size:13px;color-scheme:dark}
-html.light .mb-field input{color-scheme:light}
-.mb-field input:focus{outline:none;border-color:var(--primary)}
-.mb-venue{flex:1;min-width:170px}
+html.light .mb-field input,html.light .mb-field select{color-scheme:light}
+.mb-field input:focus,.mb-field select:focus{outline:none;border-color:var(--primary)}
+.mb-venue{flex:1;min-width:210px}
+.mb-venue-txt{display:inline-flex;align-items:flex-start;gap:6px}
+.mb-vcol{display:inline-flex;flex-direction:column;line-height:1.25}
+.mb-vname{font-weight:600;color:var(--foreground)}
+.mb-addr{color:var(--subhead);font-size:11.5px}
 @media (max-width:640px){.mb-field.mb-venue{flex:1 1 100%}}
 
 /* ===== Compactación general ===== */
@@ -738,6 +742,13 @@ let reserve=new Set();
 let dt=new Set();
 let match={date:'',time:'',arrival:'',venue:''};
 const cleanMatch=m=>(m&&typeof m==='object')?{date:m.date||'',time:m.time||'',arrival:m.arrival||'',venue:m.venue||''}:{date:'',time:'',arrival:'',venue:''};
+/* canchas del torneo (para el desplegable) */
+const VENUES=[
+  {name:'Campo Portol (Marratxí)',   addr:'Carrer Major, s/n · 07141 Pòrtol, Illes Balears'},
+  {name:'Campo Patronato (Palma)',   addr:'Carrer de Quito, 2 · Platja de Palma, 07006 Palma'},
+  {name:'Campo La Nova Cabana',      addr:'Carrer Lliri, 2 · 07141 Marratxinet, Illes Balears'},
+  {name:'Campo de Fútbol Son Roca',  addr:'Carrer del Cap del Pinar, Ponent · 07011 Palma'},
+];
 /* tabla de posiciones (División C). Pts/DG se calculan; PJ/PG/PE/PP/GF/GC editables */
 const S=(name,pj,pg,pe,pp,gf,gc)=>({name,pj,pg,pe,pp,gf,gc});
 let standings=[
@@ -933,7 +944,8 @@ function renderMatch(){
       <label class="mb-field">Fecha<input type="date" id="mDate" value="${match.date||''}"></label>
       <label class="mb-field">Hora partido<input type="time" id="mTime" value="${match.time||''}"></label>
       <label class="mb-field">Llegada<input type="time" id="mArrival" value="${match.arrival||''}"></label>
-      <label class="mb-field mb-venue">Cancha / lugar<input type="text" id="mVenue" placeholder="Ej.: Cancha 3 · Complejo…" value="${esc(match.venue||'')}"></label>`;
+      <label class="mb-field mb-venue">Cancha<select id="mVenue"><option value="">— Elegir cancha —</option>${
+        VENUES.map(v=>`<option value="${esc(v.name)}"${match.venue===v.name?' selected':''}>${esc(v.name)}</option>`).join('')}</select></label>`;
   } else {
     matchBar.classList.remove('editing');
     const dateStr=fmtMatchDate();
@@ -945,7 +957,7 @@ function renderMatch(){
         ${dateStr?`<span class="mb-when">${dateStr}</span>`:''}
         ${match.time?`<span class="mb-chip"><i class="fa fa-futbol"></i> Partido ${match.time}</span>`:''}
         ${match.arrival?`<span class="mb-chip mb-arr"><i class="fa fa-person-walking"></i> Llegada ${match.arrival}</span>`:''}
-        ${match.venue?`<span class="mb-venue-txt"><i class="fa fa-location-dot"></i> ${esc(match.venue)}</span>`:''}`;
+        ${match.venue?(()=>{const v=VENUES.find(x=>x.name===match.venue);return `<span class="mb-venue-txt"><i class="fa fa-location-dot"></i><span class="mb-vcol"><span class="mb-vname">${esc(match.venue)}</span>${v?`<span class="mb-addr">${esc(v.addr)}</span>`:''}</span></span>`;})():''}`;
     }
   }
 }
