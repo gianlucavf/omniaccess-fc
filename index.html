@@ -322,6 +322,8 @@ thead th{ background:rgba(255,255,255,.02); }
 
 /* ===== Novedades — tarjeta de partido ===== */
 .news-wrap{ max-width:640px; margin:0 auto; }
+.ics-line{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.ics-line code{background:var(--surface);border:1px solid var(--divider);border-radius:6px;padding:6px 9px;font-size:12px;color:var(--body-color)}
 .match-card{ text-align:center; padding:26px 24px; }
 .mc-tag{ display:inline-block; background:var(--primary); color:#fff; font-family:'Oswald',sans-serif;
   letter-spacing:1px; text-transform:uppercase; font-size:12px; padding:5px 16px; border-radius:999px; margin-bottom:20px; }
@@ -683,6 +685,15 @@ html.light .mb-field input,html.light .mb-field select{color-scheme:light}
           <div><h3>Novedades</h3><p class="note" style="margin:0">Fixture y avisos</p></div></div>
         <p>El <b>próximo partido</b> aparece siempre arriba de todo en la pestaña <b>Alineación</b> y se actualiza cuando el admin lo edita.</p>
         <p class="note">El <b>fixture completo</b> del torneo se cargará acá en cuanto estén confirmadas las fechas y horas de cada jornada.</p>
+      </div>
+
+      <div class="card" style="margin-top:16px">
+        <div class="rule-head"><span class="rule-ico ico-ok"><i class="fa fa-calendar-check"></i></span>
+          <div><h3>Calendario del equipo</h3><p class="note" style="margin:0">Suscripción que se actualiza sola</p></div></div>
+        <p>Suscribite <b>una vez</b> y los partidos aparecen en tu Google Calendar. Cuando el admin los actualiza, se refrescan solos (Google sincroniza los calendarios externos cada varias horas).</p>
+        <p><a class="btn" id="calSubBtn" href="#" target="_blank" rel="noopener"><i class="fa fa-calendar-plus"></i> Suscribirme (Google)</a></p>
+        <p class="note">O manualmente: Google Calendar → <b>Otros calendarios</b> → <b>+</b> → <b>Desde una URL</b> → pegá:</p>
+        <p class="ics-line"><code id="icsUrl"></code> <button class="theme-toggle" id="copyIcs"><i class="fa fa-copy"></i> Copiar</button></p>
       </div>
     </div>
   </section>
@@ -1228,6 +1239,15 @@ tt.onclick=()=>{document.documentElement.classList.toggle('light');
   setInterval(refreshFromCloud, 30000);
   window.addEventListener('focus', refreshFromCloud);
   document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) refreshFromCloud(); });
+})();
+
+/* ── suscripción al calendario (.ics del Apps Script) ── */
+(function(){
+  const ICS_URL=API_URL+'?ics=1';
+  const u=document.getElementById('icsUrl'); if(u)u.textContent=ICS_URL;
+  const b=document.getElementById('calSubBtn'); if(b)b.href='https://calendar.google.com/calendar/render?cid='+encodeURIComponent(ICS_URL);
+  const c=document.getElementById('copyIcs'); if(c)c.onclick=()=>{ try{navigator.clipboard.writeText(ICS_URL);}catch(e){}
+    c.innerHTML='<i class="fa fa-check"></i> Copiado'; setTimeout(()=>c.innerHTML='<i class="fa fa-copy"></i> Copiar',1500); };
 })();
 </script>
 </body>
