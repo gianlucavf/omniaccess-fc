@@ -339,6 +339,11 @@ thead th{ background:rgba(255,255,255,.02); }
 .fx-erow .fx-in{padding:6px 7px;font-size:12px;min-width:0}
 .fx-erow .fx-t{width:96px}
 .fx-erow select.fx-in{max-width:160px}
+.cal-btns{display:flex;gap:10px;flex-wrap:wrap}
+.cal-btns .btn{text-decoration:none;color:#fff}
+.btn-apple{background:#111;box-shadow:0 3px 10px rgba(0,0,0,.35)}
+.btn-apple:hover{background:#000}
+html.light .btn-apple{background:#111}
 .ics-line{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .ics-line code{background:var(--surface);border:1px solid var(--divider);border-radius:6px;padding:6px 9px;font-size:12px;color:var(--body-color)}
 .match-card{ text-align:center; padding:26px 24px; }
@@ -717,9 +722,12 @@ html.light .mb-field input,html.light .mb-field select{color-scheme:light}
       <div class="card" style="margin-top:16px">
         <div class="rule-head"><span class="rule-ico ico-ok"><i class="fa fa-calendar-check"></i></span>
           <div><h3>Calendario del equipo</h3><p class="note" style="margin:0">Suscripción que se actualiza sola</p></div></div>
-        <p>Suscribite <b>una vez</b> y los partidos aparecen en tu Google Calendar. Cuando el admin los actualiza, se refrescan solos (Google sincroniza los calendarios externos cada varias horas).</p>
-        <p><a class="btn" id="calSubBtn" href="#" target="_blank" rel="noopener"><i class="fa fa-calendar-plus"></i> Suscribirme (Google)</a></p>
-        <p class="note">O manualmente: Google Calendar → <b>Otros calendarios</b> → <b>+</b> → <b>Desde una URL</b> → pegá:</p>
+        <p>Suscribite <b>una vez</b> y los partidos aparecen en tu calendario. Cuando el admin los actualiza, se refrescan solos (los calendarios suscritos se sincronizan cada varias horas, no al instante).</p>
+        <p class="cal-btns">
+          <a class="btn" id="calSubBtn" href="#" target="_blank" rel="noopener"><i class="fa fa-calendar-plus"></i> Google Calendar</a>
+          <a class="btn btn-apple" id="calAppleBtn" href="#"><i class="fa-brands fa-apple"></i> Apple Calendar</a>
+        </p>
+        <p class="note"><b>Google (web):</b> Otros calendarios → <b>+</b> → <b>Desde una URL</b>. &nbsp; <b>iPhone:</b> Ajustes → Calendario → Cuentas → Añadir → <b>Otra</b> → <b>Calendario suscrito</b>. &nbsp; <b>Mac:</b> Calendario → Archivo → <b>Nueva suscripción</b>. Pegá esta URL:</p>
         <p class="ics-line"><code id="icsUrl"></code> <button class="theme-toggle" id="copyIcs"><i class="fa fa-copy"></i> Copiar</button></p>
       </div>
     </div>
@@ -1326,6 +1334,7 @@ tt.onclick=()=>{document.documentElement.classList.toggle('light');
   const ICS_URL=API_URL+'?ics=1';
   const u=document.getElementById('icsUrl'); if(u)u.textContent=ICS_URL;
   const b=document.getElementById('calSubBtn'); if(b)b.href='https://calendar.google.com/calendar/render?cid='+encodeURIComponent(ICS_URL);
+  const ab=document.getElementById('calAppleBtn'); if(ab)ab.href=ICS_URL.replace(/^https?:\/\//,'webcal://');
   const c=document.getElementById('copyIcs'); if(c)c.onclick=()=>{ try{navigator.clipboard.writeText(ICS_URL);}catch(e){}
     c.innerHTML='<i class="fa fa-check"></i> Copiado'; setTimeout(()=>c.innerHTML='<i class="fa fa-copy"></i> Copiar',1500); };
 })();
