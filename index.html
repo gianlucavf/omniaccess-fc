@@ -389,6 +389,21 @@ html.light .mb-field input,html.light .mb-field select{color-scheme:light}
 .mb-addr{color:var(--subhead);font-size:11.5px}
 .mb-cal{margin-left:auto;font-size:12.5px;padding:7px 13px;text-decoration:none;color:#fff}
 @media (max-width:640px){.mb-cal{margin-left:0}}
+/* tarjeta VS del próximo partido (landing) */
+.matchbar.nm-card{flex-direction:column;align-items:stretch;gap:12px;padding:16px 18px}
+.nm-tag{font-family:'Oswald',sans-serif;text-transform:uppercase;letter-spacing:1px;font-size:12px;
+  color:var(--primary);font-weight:600;display:flex;align-items:center;gap:7px}
+.nm-vs-row{display:flex;align-items:center;justify-content:center;gap:18px;flex-wrap:wrap}
+.nm-team{display:flex;flex-direction:column;align-items:center;gap:7px;flex:1;min-width:110px;max-width:200px}
+.nm-team span{font-family:'Oswald',sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:.5px;
+  color:var(--foreground);font-size:15px;text-align:center;line-height:1.15}
+.nm-crest{height:56px;width:auto;filter:drop-shadow(0 3px 7px rgba(0,0,0,.45))}
+.nm-shield{height:56px;width:56px;border-radius:50%;display:grid;place-items:center;background:var(--surface);
+  border:2px solid var(--divider);color:var(--subhead);font-size:24px}
+.nm-vs{font-family:'Oswald',sans-serif;font-weight:700;font-size:20px;color:var(--primary)}
+.nm-info{display:flex;align-items:center;gap:10px;flex-wrap:wrap;border-top:1px solid var(--divider);padding-top:12px}
+.nm-info .mb-cal{margin-left:auto}
+@media (max-width:640px){.nm-info .mb-cal{margin-left:0;width:100%;justify-content:center}}
 @media (max-width:640px){.mb-field.mb-venue{flex:1 1 100%}}
 
 /* ===== Compactación general ===== */
@@ -663,18 +678,11 @@ html.light .mb-field input,html.light .mb-field select{color-scheme:light}
   <!-- NOVEDADES -->
   <section class="panel" id="panel-news">
     <div class="news-wrap">
-      <div class="card match-card">
-        <div class="mc-tag">Primer partido</div>
-        <div class="mc-teams">
-          <div class="mc-team"><img src="assets/crest.png" alt="OmniAccess FC"><span>OmniAccess FC</span></div>
-          <span class="mc-vs">VS</span>
-          <div class="mc-team"><div class="mc-rival"><i class="fa fa-shield-halved"></i></div><span>Wolves Street</span></div>
-        </div>
-        <div class="mc-info">
-          <span><i class="fa fa-calendar-day"></i> Viernes 7 de agosto</span>
-          <span><i class="fa fa-clock"></i> 20:30</span>
-          <span><i class="fa fa-location-dot"></i> Patronato</span>
-        </div>
+      <div class="card">
+        <div class="rule-head"><span class="rule-ico ico-info"><i class="fa fa-bullhorn"></i></span>
+          <div><h3>Novedades</h3><p class="note" style="margin:0">Fixture y avisos</p></div></div>
+        <p>El <b>próximo partido</b> aparece siempre arriba de todo en la pestaña <b>Alineación</b> y se actualiza cuando el admin lo edita.</p>
+        <p class="note">El <b>fixture completo</b> del torneo se cargará acá en cuanto estén confirmadas las fechas y horas de cada jornada.</p>
       </div>
     </div>
   </section>
@@ -750,8 +758,8 @@ let FORMATION='331';
 let lineup=[];
 let reserve=new Set();
 let dt=new Set();
-let match={date:'',time:'',arrival:'',venue:''};
-const cleanMatch=m=>(m&&typeof m==='object')?{date:m.date||'',time:m.time||'',arrival:m.arrival||'',venue:m.venue||''}:{date:'',time:'',arrival:'',venue:''};
+let match={rival:'',date:'',time:'',arrival:'',venue:''};
+const cleanMatch=m=>(m&&typeof m==='object')?{rival:m.rival||'',date:m.date||'',time:m.time||'',arrival:m.arrival||'',venue:m.venue||''}:{rival:'',date:'',time:'',arrival:'',venue:''};
 /* canchas del torneo (para el desplegable) */
 const VENUES=[
   {name:'Campo Portol (Marratxí)',   addr:'Carrer Major, s/n · 07141 Pòrtol, Illes Balears'},
@@ -982,36 +990,51 @@ function gcalHref(){
   const v=VENUES.find(x=>x.name===match.venue);
   const loc=match.venue?(v?match.venue+' — '+v.addr:match.venue):'';
   const det=(match.arrival?('Llegada '+match.arrival+'. '):'')+'OmniAccess FC · Copa SEPTEN · División C';
-  const q=new URLSearchParams({action:'TEMPLATE',text:'OmniAccess FC · Partido',dates:f(start)+'/'+f(end),ctz:'Europe/Madrid',location:loc,details:det});
+  const title=match.rival?('OmniAccess FC vs '+match.rival):'OmniAccess FC · Partido';
+  const q=new URLSearchParams({action:'TEMPLATE',text:title,dates:f(start)+'/'+f(end),ctz:'Europe/Madrid',location:loc,details:det});
   return 'https://calendar.google.com/calendar/render?'+q.toString();
 }
 function renderMatch(){
   if(lineupEditing){
-    matchBar.classList.add('editing');
+    matchBar.className='matchbar editing';
+    const rivalOpts=standings.map(t=>t.name).filter(n=>n!=='OmniAccess FC')
+      .map(n=>`<option value="${esc(n)}"${match.rival===n?' selected':''}>${esc(n)}</option>`).join('');
     matchBar.innerHTML=`<span class="mb-ico"><i class="fa fa-calendar-day"></i></span>
+      <label class="mb-field mb-venue">Rival<select id="mRival"><option value="">— Elegir rival —</option>${rivalOpts}</select></label>
       <label class="mb-field">Fecha<input type="date" id="mDate" value="${match.date||''}"></label>
       <label class="mb-field">Hora partido<input type="time" id="mTime" value="${match.time||''}"></label>
       <label class="mb-field">Llegada<input type="time" id="mArrival" value="${match.arrival||''}"></label>
       <label class="mb-field mb-venue">Cancha<select id="mVenue"><option value="">— Elegir cancha —</option>${
         VENUES.map(v=>`<option value="${esc(v.name)}"${match.venue===v.name?' selected':''}>${esc(v.name)}</option>`).join('')}</select></label>`;
-  } else {
-    matchBar.classList.remove('editing');
-    const dateStr=fmtMatchDate();
-    if(!dateStr&&!match.time&&!match.arrival&&!match.venue){
-      matchBar.innerHTML=`<span class="mb-ico"><i class="fa fa-calendar-day"></i></span><span class="mb-empty">Próximo partido — sin definir</span>`;
-    } else {
-      matchBar.innerHTML=`<span class="mb-ico"><i class="fa fa-calendar-day"></i></span>
-        <span class="mb-label">Próximo partido</span>
-        ${dateStr?`<span class="mb-when">${dateStr}</span>`:''}
-        ${match.time?`<span class="mb-chip"><i class="fa fa-futbol"></i> Partido ${match.time}</span>`:''}
-        ${match.arrival?`<span class="mb-chip mb-arr"><i class="fa fa-person-walking"></i> Llegada ${match.arrival}</span>`:''}
-        ${match.venue?(()=>{const v=VENUES.find(x=>x.name===match.venue);return `<span class="mb-venue-txt"><i class="fa fa-location-dot"></i><span class="mb-vcol"><span class="mb-vname">${esc(match.venue)}</span>${v?`<span class="mb-addr">${esc(v.addr)}</span>`:''}</span></span>`;})():''}
-        ${(()=>{const h=gcalHref();return h?`<a class="btn mb-cal" href="${h}" target="_blank" rel="noopener"><i class="fa fa-calendar-plus"></i> Agregar al calendario</a>`:'';})()}`;
-    }
+    return;
   }
+  const dateStr=fmtMatchDate();
+  if(!dateStr&&!match.time&&!match.arrival&&!match.venue&&!match.rival){
+    matchBar.className='matchbar';
+    matchBar.innerHTML=`<span class="mb-ico"><i class="fa fa-calendar-day"></i></span><span class="mb-empty">Próximo partido — sin definir</span>`;
+    return;
+  }
+  const v=VENUES.find(x=>x.name===match.venue);
+  const cal=gcalHref();
+  matchBar.className='matchbar nm-card';
+  matchBar.innerHTML=`
+    <div class="nm-tag"><i class="fa fa-calendar-day"></i> Próximo partido</div>
+    <div class="nm-vs-row">
+      <div class="nm-team"><img class="nm-crest" src="assets/crest.png" alt=""><span>OmniAccess FC</span></div>
+      <span class="nm-vs">VS</span>
+      <div class="nm-team"><span class="nm-shield"><i class="fa fa-shield-halved"></i></span><span>${match.rival?esc(match.rival):'Rival a definir'}</span></div>
+    </div>
+    <div class="nm-info">
+      ${dateStr?`<span class="mb-chip"><i class="fa fa-calendar"></i> ${dateStr}</span>`:''}
+      ${match.time?`<span class="mb-chip"><i class="fa fa-futbol"></i> Partido ${match.time}</span>`:''}
+      ${match.arrival?`<span class="mb-chip mb-arr"><i class="fa fa-person-walking"></i> Llegada ${match.arrival}</span>`:''}
+      ${match.venue?`<span class="mb-venue-txt"><i class="fa fa-location-dot"></i><span class="mb-vcol"><span class="mb-vname">${esc(match.venue)}</span>${v?`<span class="mb-addr">${esc(v.addr)}</span>`:''}</span></span>`:''}
+      ${cal?`<a class="btn mb-cal" href="${cal}" target="_blank" rel="noopener"><i class="fa fa-calendar-plus"></i> Agregar al calendario</a>`:''}
+    </div>`;
 }
 matchBar.addEventListener('input',e=>{const t=e.target;
-  if(t.id==='mDate')match.date=t.value; else if(t.id==='mTime')match.time=t.value;
+  if(t.id==='mRival')match.rival=t.value;
+  else if(t.id==='mDate')match.date=t.value; else if(t.id==='mTime')match.time=t.value;
   else if(t.id==='mArrival')match.arrival=t.value; else if(t.id==='mVenue')match.venue=t.value;
   save();});
 /* ── tabla de posiciones ── */
