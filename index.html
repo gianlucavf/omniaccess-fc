@@ -387,6 +387,8 @@ html.light .mb-field input,html.light .mb-field select{color-scheme:light}
 .mb-vcol{display:inline-flex;flex-direction:column;line-height:1.25}
 .mb-vname{font-weight:600;color:var(--foreground)}
 .mb-addr{color:var(--subhead);font-size:11.5px}
+.mb-cal{margin-left:auto;font-size:12.5px;padding:7px 13px;text-decoration:none;color:#fff}
+@media (max-width:640px){.mb-cal{margin-left:0}}
 @media (max-width:640px){.mb-field.mb-venue{flex:1 1 100%}}
 
 /* ===== Compactación general ===== */
@@ -970,6 +972,19 @@ function fmtMatchDate(){
   const dias=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'],mes=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
   return dias[d.getDay()]+' '+(+p[2])+' '+mes[+p[1]-1];
 }
+function pad2(n){return String(n).padStart(2,'0');}
+function gcalHref(){
+  if(!match.date||!match.time)return '';
+  const [y,mo,da]=match.date.split('-').map(Number), [hh,mm]=match.time.split(':').map(Number);
+  if([y,mo,da,hh,mm].some(isNaN))return '';
+  const start=new Date(y,mo-1,da,hh,mm), end=new Date(start.getTime()+90*60000);
+  const f=d=>''+d.getFullYear()+pad2(d.getMonth()+1)+pad2(d.getDate())+'T'+pad2(d.getHours())+pad2(d.getMinutes())+'00';
+  const v=VENUES.find(x=>x.name===match.venue);
+  const loc=match.venue?(v?match.venue+' — '+v.addr:match.venue):'';
+  const det=(match.arrival?('Llegada '+match.arrival+'. '):'')+'OmniAccess FC · Copa SEPTEN · División C';
+  const q=new URLSearchParams({action:'TEMPLATE',text:'OmniAccess FC · Partido',dates:f(start)+'/'+f(end),ctz:'Europe/Madrid',location:loc,details:det});
+  return 'https://calendar.google.com/calendar/render?'+q.toString();
+}
 function renderMatch(){
   if(lineupEditing){
     matchBar.classList.add('editing');
@@ -990,7 +1005,8 @@ function renderMatch(){
         ${dateStr?`<span class="mb-when">${dateStr}</span>`:''}
         ${match.time?`<span class="mb-chip"><i class="fa fa-futbol"></i> Partido ${match.time}</span>`:''}
         ${match.arrival?`<span class="mb-chip mb-arr"><i class="fa fa-person-walking"></i> Llegada ${match.arrival}</span>`:''}
-        ${match.venue?(()=>{const v=VENUES.find(x=>x.name===match.venue);return `<span class="mb-venue-txt"><i class="fa fa-location-dot"></i><span class="mb-vcol"><span class="mb-vname">${esc(match.venue)}</span>${v?`<span class="mb-addr">${esc(v.addr)}</span>`:''}</span></span>`;})():''}`;
+        ${match.venue?(()=>{const v=VENUES.find(x=>x.name===match.venue);return `<span class="mb-venue-txt"><i class="fa fa-location-dot"></i><span class="mb-vcol"><span class="mb-vname">${esc(match.venue)}</span>${v?`<span class="mb-addr">${esc(v.addr)}</span>`:''}</span></span>`;})():''}
+        ${(()=>{const h=gcalHref();return h?`<a class="btn mb-cal" href="${h}" target="_blank" rel="noopener"><i class="fa fa-calendar-plus"></i> Agregar al calendario</a>`:'';})()}`;
     }
   }
 }
