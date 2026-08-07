@@ -332,6 +332,10 @@ thead th{ background:rgba(255,255,255,.02); }
 .fx-away{background:color-mix(in srgb,var(--warning) 22%,transparent);color:var(--warning)}
 .fx-match{flex:1;min-width:0;font-size:13px;color:var(--foreground)}
 .fx-match .fx-vs{color:var(--subhead);font-weight:400;font-size:12px;margin:0 2px}
+.fx-res{font-weight:700;font-size:12.5px;padding:2px 9px;border-radius:999px;white-space:nowrap}
+.fx-res.w{background:color-mix(in srgb,var(--success) 20%,transparent);color:var(--success)}
+.fx-res.l{background:color-mix(in srgb,var(--danger) 20%,transparent);color:var(--danger)}
+.fx-res.d{background:var(--muted);color:var(--subhead)}
 .fx-when{color:var(--body-color);font-size:12.5px;white-space:nowrap}
 .fx-when.fx-tbd{color:var(--muted);font-style:italic}
 .fx-erow{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:8px;background:var(--surface);
@@ -825,7 +829,7 @@ let standings=[
 ];
 function cleanStandings(a){ return Array.isArray(a)?a.filter(t=>t&&t.name!=null).map(t=>S(String(t.name),+t.pj||0,+t.pg||0,+t.pe||0,+t.pp||0,+t.gf||0,+t.gc||0)):standings; }
 /* fixture del torneo (orden cronológico). home=true → OmniAccess local */
-const FX=(rival,home,date,time,arrival,venue)=>({rival,home,date:date||'',time:time||'',arrival:arrival||'',venue:venue||''});
+const FX=(rival,home,date,time,arrival,venue,gf,gc)=>({rival,home,date:date||'',time:time||'',arrival:arrival||'',venue:venue||'',gf:(gf==null?null:+gf),gc:(gc==null?null:+gc)});
 let fixture=[
   FX('Wolves Street',true,'2026-08-07','21:15','20:30','Campo Patronato (Palma)'),
   FX('Pets Places',false), FX('CD Canan',false), FX('Cojos FC.',false), FX('Blanquitos F.C',false),
@@ -833,7 +837,7 @@ let fixture=[
   FX('Los Isquios',true), FX('Esfinter Miami',true), FX('Los Gallos FC',true), FX('FC Fenix',true),
   FX('Palma United',true), FX('Bayern de los Caídos',true), FX('Olimpo FC',true), FX('Atlético Barril.',false),
 ];
-function cleanFixture(a){ return Array.isArray(a)?a.map(f=>FX(String(f.rival||''),!!f.home,f.date,f.time,f.arrival,f.venue)):fixture; }
+function cleanFixture(a){ return Array.isArray(a)?a.map(f=>FX(String(f.rival||''),!!f.home,f.date,f.time,f.arrival,f.venue,f.gf,f.gc)):fixture; }
 const byId=id=>SQUAD.find(p=>p.id===id);
 function save(){try{localStorage.setItem('oafc_lineup',JSON.stringify({f:FORMATION,l:lineup,r:[...reserve],d:[...dt],m:match,std:standings,fx:fixture}))}catch(e){}}
 function loadState(){try{const d=JSON.parse(localStorage.getItem('oafc_lineup'));
@@ -1060,10 +1064,13 @@ function renderFixture(){
   fixtureList.innerHTML=fixture.map((f,i)=>{
     const dstr=fmtDateStr(f.date);
     const when=(dstr||f.time)?(dstr+(f.time?(dstr?' · ':'')+f.time:'')):'A definir';
+    const done=(f.gf!=null&&f.gc!=null);
+    const res=done?`<span class="fx-res ${f.gf>f.gc?'w':(f.gf<f.gc?'l':'d')}">${f.gf}-${f.gc}</span>`:'';
     return `<div class="fx-row">
       <span class="fx-j">${i+1}</span>
       <span class="fx-badge ${f.home?'fx-home':'fx-away'}" title="${f.home?'Local':'Visitante'}">${f.home?'L':'V'}</span>
       <span class="fx-match"><b>OmniAccess FC</b> <span class="fx-vs">vs</span> ${esc(f.rival||'—')}</span>
+      ${res}
       <span class="fx-when${(dstr||f.time)?'':' fx-tbd'}">${when}</span>
     </div>`;}).join('');
 }
