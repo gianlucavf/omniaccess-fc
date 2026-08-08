@@ -348,6 +348,8 @@ thead th{ background:rgba(255,255,255,.02); }
 .btn-apple{background:#111;box-shadow:0 3px 10px rgba(0,0,0,.35)}
 .btn-apple:hover{background:#000}
 html.light .btn-apple{background:#111}
+.team-head{display:flex;align-items:center;gap:14px;margin-bottom:4px}
+.team-head img{height:60px;width:auto;filter:drop-shadow(0 3px 7px rgba(0,0,0,.4))}
 .ics-line{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .ics-line code{background:var(--surface);border:1px solid var(--divider);border-radius:6px;padding:6px 9px;font-size:12px;color:var(--body-color)}
 .match-card{ text-align:center; padding:26px 24px; }
@@ -505,8 +507,9 @@ html.light .mb-field input,html.light .mb-field select{color-scheme:light}
   <button class="tab active" data-panel="formation"><i class="fa fa-futbol"></i>Alineación</button>
   <button class="tab" data-panel="squad"><i class="fa fa-users"></i>Plantilla</button>
   <button class="tab" data-panel="table"><i class="fa fa-ranking-star"></i>Posiciones</button>
+  <button class="tab" data-panel="teams"><i class="fa fa-shield-halved"></i>Equipos</button>
+  <button class="tab" data-panel="news"><i class="fa fa-calendar-days"></i>Fixture</button>
   <button class="tab" data-panel="rules"><i class="fa fa-scroll"></i>Reglamento</button>
-  <button class="tab" data-panel="news"><i class="fa fa-bell"></i>Novedades</button>
   <button class="tab" data-panel="about"><i class="fa fa-circle-info"></i>Info</button>
 </nav>
 
@@ -691,15 +694,32 @@ html.light .mb-field input,html.light .mb-field select{color-scheme:light}
   <!-- NOVEDADES -->
   <!-- POSICIONES -->
   <section class="panel" id="panel-table">
-    <div class="table-wrap">
-      <div class="toolbar">
-        <h2 class="rules-title" style="border:none;padding-top:0;margin:0"><i class="fa fa-ranking-star"></i> Posiciones · División C</h2>
-        <div class="spacer"></div>
-        <button class="theme-toggle" id="stdAddBtn" style="display:none"><i class="fa fa-plus"></i> Añadir equipo</button>
-        <button class="btn" id="stdEditBtn"><i class="fa fa-lock"></i> Editar</button>
-      </div>
+    <div class="table-wrap" style="max-width:820px">
+      <h2 class="rules-title" style="border:none;padding-top:0"><i class="fa fa-ranking-star"></i> Posiciones · División C</h2>
       <div class="std-scroll" id="stdTable"></div>
-      <p class="note" id="stdNote">Pts y DG se calculan solos; la tabla se ordena automáticamente. Pulsá “Editar” (clave admin) para cargar resultados y “Guardar para todos” para publicarlos.</p>
+      <p class="note" id="stdNote">Actualización automática desde la API del torneo.</p>
+
+      <h2 class="rules-title"><i class="fa fa-futbol"></i> Goleadores</h2>
+      <div class="std-scroll" id="goleBox"><p class="note">Cargando…</p></div>
+
+      <h2 class="rules-title"><i class="fa fa-shield-halved"></i> Valla menos vencida</h2>
+      <div class="std-scroll" id="vallaBox"></div>
+
+      <h2 class="rules-title"><i class="fa fa-square"></i> Tarjetas / Fair Play</h2>
+      <div class="std-scroll" id="tarjBox"></div>
+      <p class="note" id="tdataUpd"></p>
+    </div>
+  </section>
+
+  <!-- EQUIPOS -->
+  <section class="panel" id="panel-teams">
+    <div class="table-wrap" style="max-width:820px">
+      <div class="toolbar">
+        <span class="field-label">Equipo</span>
+        <select class="pill" id="teamSel"></select>
+        <div class="spacer"></div>
+      </div>
+      <div id="teamBox"><p class="note">Cargando…</p></div>
     </div>
   </section>
 
@@ -713,13 +733,8 @@ html.light .mb-field input,html.light .mb-field select{color-scheme:light}
       </div>
 
       <div class="card" style="margin-top:16px">
-        <div class="toolbar" style="margin-bottom:6px">
-          <h3 style="margin:0"><i class="fa fa-list-ol" style="color:var(--primary);margin-right:8px"></i>Fixture · Copa SEPTEN</h3>
-          <div class="spacer"></div>
-          <button class="theme-toggle" id="fxAddBtn" style="display:none"><i class="fa fa-plus"></i> Añadir partido</button>
-          <button class="btn" id="fxEditBtn"><i class="fa fa-lock"></i> Editar</button>
-        </div>
-        <p class="note" style="margin:0 0 10px">Local (L) / Visitante (V). Fechas y horas <b>a confirmar</b> por jornada — el admin las va completando.</p>
+        <h3 style="margin:0 0 4px"><i class="fa fa-list-ol" style="color:var(--primary);margin-right:8px"></i>Fixture · Copa SEPTEN</h3>
+        <p class="note" style="margin:0 0 10px">Local (L) / Visitante (V). Se actualiza automático desde la API del torneo.</p>
         <div id="fixtureList" class="fixture-list"></div>
       </div>
 
@@ -884,6 +899,7 @@ async function refreshFromCloud(){
     if(s&&Array.isArray(s.l)){ lastCloudRaw=txt; applyState(s);
       document.getElementById('formationSel').value=FORMATION; renderAll(); }
   }catch(e){}
+  loadTournament();
 }
 async function cloudSave(){
   const st=currentState(); st._ts=Date.now();
@@ -1045,22 +1061,6 @@ function fmtMatchDate(){ return fmtDateStr(match.date); }
 const fixtureList=document.getElementById('fixtureList');
 function renderFixture(){
   if(!fixtureList)return;
-  if(lineupEditing){
-    const rivalOpts=f=>standings.map(t=>t.name).filter(n=>n!=='OmniAccess FC')
-      .map(n=>`<option value="${esc(n)}"${f.rival===n?' selected':''}>${esc(n)}</option>`).join('');
-    const venOpts=f=>VENUES.map(v=>`<option value="${esc(v.name)}"${f.venue===v.name?' selected':''}>${esc(v.name)}</option>`).join('');
-    fixtureList.innerHTML=fixture.map((f,i)=>`<div class="fx-erow">
-      <span class="fx-j">${i+1}</span>
-      <select class="cell-inp fx-in" data-i="${i}" data-k="rival"><option value="">Rival…</option>${rivalOpts(f)}</select>
-      <select class="cell-inp fx-in fx-lv" data-i="${i}" data-k="home"><option value="1"${f.home?' selected':''}>Local</option><option value="0"${!f.home?' selected':''}>Visitante</option></select>
-      <input class="cell-inp fx-in" type="date" data-i="${i}" data-k="date" value="${f.date||''}">
-      <input class="cell-inp fx-in fx-t" type="time" data-i="${i}" data-k="time" value="${f.time||''}" title="Hora partido">
-      <input class="cell-inp fx-in fx-t" type="time" data-i="${i}" data-k="arrival" value="${f.arrival||''}" title="Llegada">
-      <select class="cell-inp fx-in" data-i="${i}" data-k="venue"><option value="">Cancha…</option>${venOpts(f)}</select>
-      <button class="row-del" data-fxdel="${i}" title="Quitar"><i class="fa fa-trash"></i></button>
-    </div>`).join('');
-    return;
-  }
   fixtureList.innerHTML=fixture.map((f,i)=>{
     const dstr=fmtDateStr(f.date);
     const when=(dstr||f.time)?(dstr+(f.time?(dstr?' · ':'')+f.time:'')):'A definir';
@@ -1080,6 +1080,57 @@ fixtureList&&fixtureList.addEventListener('input',e=>{const el=e.target.closest(
   save();});
 fixtureList&&fixtureList.addEventListener('click',e=>{const d=e.target.closest('[data-fxdel]');if(!d)return;
   fixture.splice(+d.dataset.fxdel,1);save();renderFixture();});
+
+/* ── datos del torneo (data/tournament.json): goleadores, valla, tarjetas, equipos ── */
+let TDATA=null;
+const isOA=n=>(n||'').toLowerCase().includes('omniaccess');
+async function loadTournament(){
+  try{const r=await fetch('data/tournament.json?t='+Date.now(),{cache:'no-store'}); if(!r.ok)return;
+    TDATA=await r.json(); renderExtras(); renderTeams();}catch(e){}
+}
+function renderExtras(){
+  const gb=document.getElementById('goleBox'),vb=document.getElementById('vallaBox'),tb=document.getElementById('tarjBox');
+  if(!gb)return; if(!TDATA){gb.innerHTML='<p class="note">Sin datos aún.</p>';return;}
+  const g=TDATA.goleadores||[];
+  gb.innerHTML=g.length?`<table class="std"><thead><tr><th>#</th><th class="tname">Jugador</th><th class="tname">Equipo</th><th>Goles</th></tr></thead><tbody>${
+    g.slice(0,25).map((x,i)=>`<tr class="${isOA(x.team)?'us':''}"><td class="pos">${i+1}</td><td class="tname">${esc(x.name||'—')}</td><td class="tname">${esc(x.team||'')}</td><td class="pts">${x.g}</td></tr>`).join('')}</tbody></table>`:'<p class="note">Sin goles registrados aún.</p>';
+  const v=TDATA.valla||[];
+  vb.innerHTML=v.length?`<table class="std"><thead><tr><th>#</th><th class="tname">Equipo</th><th>GC</th><th>PJ</th></tr></thead><tbody>${
+    v.slice(0,10).map((x,i)=>`<tr class="${isOA(x.team)?'us':''}"><td class="pos">${i+1}</td><td class="tname">${esc(x.team)}</td><td>${x.gc}</td><td>${x.pj}</td></tr>`).join('')}</tbody></table>`:'<p class="note">Sin datos.</p>';
+  const t=(TDATA.tarjetas||[]).filter(x=>x.tam||x.taz||x.tro);
+  tb.innerHTML=t.length?`<table class="std"><thead><tr><th class="tname">Equipo</th><th>🟨</th><th>🟦</th><th>🟥</th></tr></thead><tbody>${
+    t.map(x=>`<tr class="${isOA(x.team)?'us':''}"><td class="tname">${esc(x.team)}</td><td>${x.tam}</td><td>${x.taz}</td><td>${x.tro}</td></tr>`).join('')}</tbody></table>`:'<p class="note">Sin tarjetas registradas aún.</p>';
+  const up=document.getElementById('tdataUpd'); if(up)up.textContent='Datos del torneo actualizados: '+(TDATA.updated||'');
+}
+function renderTeams(){
+  const sel=document.getElementById('teamSel'),box=document.getElementById('teamBox');
+  if(!sel)return; if(!TDATA||!(TDATA.teams||[]).length){box.innerHTML='<p class="note">Sin datos aún.</p>';return;}
+  if(!sel.dataset.filled){
+    sel.innerHTML=TDATA.teams.map(t=>`<option value="${t.id}">${esc(t.name)}</option>`).join('');
+    const oa=TDATA.teams.find(t=>isOA(t.name)); if(oa)sel.value=oa.id;
+    sel.dataset.filled='1'; sel.onchange=()=>renderTeamBox(+sel.value);
+  }
+  renderTeamBox(+sel.value||TDATA.teams[0].id);
+}
+function renderTeamBox(id){
+  const box=document.getElementById('teamBox'); const t=(TDATA.teams||[]).find(x=>x.id===id); if(!t){box.innerHTML='';return;}
+  const st=standings.find(s=>s.name===t.name);
+  const rec=st?`${st.pj} PJ · ${st.pg}G ${st.pe}E ${st.pp}P · GF ${st.gf} · GC ${st.gc}`:'';
+  const ms=(TDATA.matches||[]).filter(m=>m.homeId===id||m.awayId===id);
+  const players=t.players||[];
+  box.innerHTML=`<div class="team-head">${t.crest?`<img src="${t.crest}" alt="" onerror="this.style.display='none'">`:''}
+    <div><h3 style="margin:0">${esc(t.name)}</h3><p class="note" style="margin:2px 0 0">${rec}</p></div></div>
+    <h2 class="rules-title"><i class="fa fa-users"></i> Plantel <span class="role-sub-n">${players.length}</span></h2>
+    <div class="std-scroll"><table class="std"><thead><tr><th class="tname">Jugador</th><th>PJ</th><th>G</th><th>🟨</th><th>🟦</th><th>🟥</th></tr></thead><tbody>${
+      players.length?players.map(p=>`<tr><td class="tname">${esc(p.name||'—')}</td><td>${p.pj}</td><td class="pts">${p.g}</td><td>${p.ya}</td><td>${p.az}</td><td>${p.ro}</td></tr>`).join(''):'<tr><td colspan="6" style="text-align:center;color:var(--muted)">Sin datos de plantel</td></tr>'}</tbody></table></div>
+    <h2 class="rules-title"><i class="fa fa-calendar-days"></i> Partidos</h2>
+    <div class="fixture-list">${ms.length?ms.map(m=>{const home=m.homeId===id;const rival=home?m.away:m.home;
+      const played=(m.gh!=null&&m.ga!=null);const mine=home?m.gh:m.ga,ot=home?m.ga:m.gh;
+      const res=played?`<span class="fx-res ${mine>ot?'w':(mine<ot?'l':'d')}">${mine}-${ot}</span>`:'';
+      const dstr=fmtDateStr(m.date);const when=(dstr||m.time)?(dstr+(m.time?(dstr?' · ':'')+m.time:'')):'A definir';
+      return `<div class="fx-row"><span class="fx-badge ${home?'fx-home':'fx-away'}">${home?'L':'V'}</span><span class="fx-match">${esc(t.name)} <span class="fx-vs">vs</span> ${esc(rival)}</span>${res}<span class="fx-when${(dstr||m.time)?'':' fx-tbd'}">${when}</span></div>`;
+    }).join(''):'<p class="note">Sin partidos.</p>'}</div>`;
+}
 function pad2(n){return String(n).padStart(2,'0');}
 function gcalHref(){
   if(!match.date||!match.time)return '';
@@ -1095,19 +1146,6 @@ function gcalHref(){
   return 'https://calendar.google.com/calendar/render?'+q.toString();
 }
 function renderMatch(){
-  if(lineupEditing){
-    matchBar.className='matchbar editing';
-    const rivalOpts=standings.map(t=>t.name).filter(n=>n!=='OmniAccess FC')
-      .map(n=>`<option value="${esc(n)}"${match.rival===n?' selected':''}>${esc(n)}</option>`).join('');
-    matchBar.innerHTML=`<span class="mb-ico"><i class="fa fa-calendar-day"></i></span>
-      <label class="mb-field mb-venue">Rival<select id="mRival"><option value="">— Elegir rival —</option>${rivalOpts}</select></label>
-      <label class="mb-field">Fecha<input type="date" id="mDate" value="${match.date||''}"></label>
-      <label class="mb-field">Hora partido<input type="time" id="mTime" value="${match.time||''}"></label>
-      <label class="mb-field">Llegada<input type="time" id="mArrival" value="${match.arrival||''}"></label>
-      <label class="mb-field mb-venue">Cancha<select id="mVenue"><option value="">— Elegir cancha —</option>${
-        VENUES.map(v=>`<option value="${esc(v.name)}"${match.venue===v.name?' selected':''}>${esc(v.name)}</option>`).join('')}</select></label>`;
-    return;
-  }
   const dateStr=fmtMatchDate();
   if(!dateStr&&!match.time&&!match.arrival&&!match.venue&&!match.rival){
     matchBar.className='matchbar';
@@ -1118,7 +1156,7 @@ function renderMatch(){
   const cal=gcalHref();
   matchBar.className='matchbar nm-card';
   matchBar.innerHTML=`
-    <div class="nm-tag"><i class="fa fa-calendar-day"></i> Próximo partido</div>
+    <div class="nm-tag"><i class="fa fa-calendar-day"></i> Próximo partido${match.home===false?' · Visitante':(match.home?' · Local':'')}</div>
     <div class="nm-vs-row">
       <div class="nm-team"><img class="nm-crest" src="assets/crest.png" alt=""><span>OmniAccess FC</span></div>
       <span class="nm-vs">VS</span>
@@ -1140,13 +1178,6 @@ matchBar.addEventListener('input',e=>{const t=e.target;
 /* ── tabla de posiciones ── */
 const stdTable=document.getElementById('stdTable');
 function renderStandings(){
-  if(lineupEditing){
-    stdTable.innerHTML=`<table class="std std-edit"><thead><tr><th class="tname">Equipo</th><th>PJ</th><th>PG</th><th>PE</th><th>PP</th><th>GF</th><th>GC</th><th></th></tr></thead><tbody>${
-      standings.map((t,i)=>`<tr><td><input class="cell-inp std-name" value="${esc(t.name)}" data-i="${i}" data-k="name"></td>`+
-        ['pj','pg','pe','pp','gf','gc'].map(k=>`<td><input class="cell-inp std-num" type="number" min="0" value="${+t[k]||0}" data-i="${i}" data-k="${k}"></td>`).join('')+
-        `<td><button class="row-del" data-stddel="${i}" title="Quitar"><i class="fa fa-trash"></i></button></td></tr>`).join('')}</tbody></table>`;
-    return;
-  }
   const rows=standings.map(t=>{const pts=3*(+t.pg||0)+(+t.pe||0),dg=(+t.gf||0)-(+t.gc||0);return {...t,pts,dg};});
   rows.sort((a,b)=>b.pts-a.pts||b.dg-a.dg||b.gf-a.gf);
   stdTable.innerHTML=`<table class="std"><thead><tr><th>#</th><th class="tname">Equipo</th><th>PJ</th><th>PG</th><th>PE</th><th>PP</th><th>GF</th><th>GC</th><th>DG</th><th>Pts</th></tr></thead><tbody>${
@@ -1330,6 +1361,7 @@ tt.onclick=()=>{document.documentElement.classList.toggle('light');
   document.getElementById('formationSel').value=FORMATION;
   updateEditUI();
   renderAll();
+  loadTournament();                              // datasets del torneo (goleadores/equipos/etc.)
   // auto-actualización para todos
   setInterval(refreshFromCloud, 30000);
   window.addEventListener('focus', refreshFromCloud);
