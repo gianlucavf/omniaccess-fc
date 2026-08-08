@@ -350,6 +350,16 @@ thead th{ background:rgba(255,255,255,.02); }
 html.light .btn-apple{background:#111}
 .team-head{display:flex;align-items:center;gap:14px;margin-bottom:4px}
 .team-head img{height:60px;width:auto;filter:drop-shadow(0 3px 7px rgba(0,0,0,.4))}
+.pl-foto{width:34px;height:34px;border-radius:50%;object-fit:cover;display:inline-grid;place-items:center;
+  background:var(--surface);border:1px solid var(--divider);color:var(--subhead);vertical-align:middle}
+.pl-pos{font-size:10px;color:var(--subhead);text-transform:uppercase;letter-spacing:.4px}
+.maps-link{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--primary);text-decoration:none;white-space:nowrap}
+.maps-link:hover{text-decoration:underline}
+.news-item{padding:10px 0;border-bottom:1px solid var(--divider)}
+.news-item:last-child{border-bottom:none}
+.news-h{font-weight:700;color:var(--foreground)}
+.news-d{font-size:11.5px;color:var(--subhead);margin:2px 0 4px}
+.news-t{margin:0;font-size:13px;color:var(--body-color);line-height:1.5}
 .ics-line{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .ics-line code{background:var(--surface);border:1px solid var(--divider);border-radius:6px;padding:6px 9px;font-size:12px;color:var(--body-color)}
 .match-card{ text-align:center; padding:26px 24px; }
@@ -707,6 +717,12 @@ html.light .mb-field input,html.light .mb-field select{color-scheme:light}
 
       <h2 class="rules-title"><i class="fa fa-square"></i> Tarjetas / Fair Play</h2>
       <div class="std-scroll" id="tarjBox"></div>
+
+      <h2 class="rules-title"><i class="fa fa-star"></i> Figuras</h2>
+      <div class="std-scroll" id="figBox"></div>
+
+      <h2 class="rules-title"><i class="fa fa-gavel"></i> Sancionados</h2>
+      <div class="std-scroll" id="sanBox"></div>
       <p class="note" id="tdataUpd"></p>
     </div>
   </section>
@@ -736,6 +752,11 @@ html.light .mb-field input,html.light .mb-field select{color-scheme:light}
         <h3 style="margin:0 0 4px"><i class="fa fa-list-ol" style="color:var(--primary);margin-right:8px"></i>Fixture · Copa SEPTEN</h3>
         <p class="note" style="margin:0 0 10px">Local (L) / Visitante (V). Se actualiza automático desde la API del torneo.</p>
         <div id="fixtureList" class="fixture-list"></div>
+      </div>
+
+      <div class="card" style="margin-top:16px">
+        <h3 style="margin:0 0 10px"><i class="fa fa-newspaper" style="color:var(--primary);margin-right:8px"></i>Noticias del torneo</h3>
+        <div id="newsBox"><p class="note">Cargando…</p></div>
       </div>
 
       <div class="card" style="margin-top:16px">
@@ -1081,12 +1102,19 @@ fixtureList&&fixtureList.addEventListener('input',e=>{const el=e.target.closest(
 fixtureList&&fixtureList.addEventListener('click',e=>{const d=e.target.closest('[data-fxdel]');if(!d)return;
   fixture.splice(+d.dataset.fxdel,1);save();renderFixture();});
 
-/* ── datos del torneo (data/tournament.json): goleadores, valla, tarjetas, equipos ── */
+/* ── datos del torneo (data/tournament.json) ── */
 let TDATA=null;
 const isOA=n=>(n||'').toLowerCase().includes('omniaccess');
+const norm=s=>(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]/g,'');
+function sedeOf(name){ if(!TDATA||!TDATA.sedes)return null; const n=norm(name); if(!n)return null;
+  return TDATA.sedes.find(s=>norm(s.name)===n) || TDATA.sedes.find(s=>norm(s.name).slice(0,12)===n.slice(0,12)); }
+function mapsHref(name){ const s=sedeOf(name);
+  if(s&&s.lat&&s.lng) return 'https://www.google.com/maps/search/?api=1&query='+s.lat+','+s.lng;
+  return name?'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(name):''; }
+function comoLlegar(name){ const h=name?mapsHref(name):''; return h?`<a class="maps-link" href="${h}" target="_blank" rel="noopener"><i class="fa fa-diamond-turn-right"></i> Cómo llegar</a>`:''; }
 async function loadTournament(){
   try{const r=await fetch('data/tournament.json?t='+Date.now(),{cache:'no-store'}); if(!r.ok)return;
-    TDATA=await r.json(); renderExtras(); renderTeams();}catch(e){}
+    TDATA=await r.json(); renderExtras(); renderTeams(); renderNoticias(); renderMatch();}catch(e){}
 }
 function renderExtras(){
   const gb=document.getElementById('goleBox'),vb=document.getElementById('vallaBox'),tb=document.getElementById('tarjBox');
@@ -1100,7 +1128,20 @@ function renderExtras(){
   const t=(TDATA.tarjetas||[]).filter(x=>x.tam||x.taz||x.tro);
   tb.innerHTML=t.length?`<table class="std"><thead><tr><th class="tname">Equipo</th><th>🟨</th><th>🟦</th><th>🟥</th></tr></thead><tbody>${
     t.map(x=>`<tr class="${isOA(x.team)?'us':''}"><td class="tname">${esc(x.team)}</td><td>${x.tam}</td><td>${x.taz}</td><td>${x.tro}</td></tr>`).join('')}</tbody></table>`:'<p class="note">Sin tarjetas registradas aún.</p>';
+  const fb=document.getElementById('figBox'); const fg=TDATA.figuras||[];
+  if(fb) fb.innerHTML=fg.length?`<table class="std"><thead><tr><th class="tname">Jugador</th><th class="tname">Equipo</th><th>Figuras</th></tr></thead><tbody>${
+    fg.map(x=>`<tr class="${isOA(x.team)?'us':''}"><td class="tname">${esc(x.name||'—')}</td><td class="tname">${esc(x.team||'')}</td><td class="pts">${x.fig}</td></tr>`).join('')}</tbody></table>`:'<p class="note">Sin figuras registradas aún.</p>';
+  const sb=document.getElementById('sanBox'); const sn=TDATA.sanciones||[];
+  const clr={R:'Roja',A:'Amarilla',Z:'Azul'};
+  if(sb) sb.innerHTML=sn.length?`<table class="std"><thead><tr><th class="tname">Jugador</th><th class="tname">Equipo</th><th>Tarjeta</th><th class="tname">Estado</th></tr></thead><tbody>${
+    sn.map(x=>{const resta=(x.resta>=99999)?'Suspensión indefinida':(x.resta>0?x.resta+' fecha(s)':'—'); const mot=x.motivo?(' · '+esc(x.motivo)):'';
+      return `<tr class="${isOA(x.team)?'us':''}"><td class="tname">${esc(x.name||'—')}</td><td class="tname">${esc(x.team||'')}</td><td>${clr[x.color]||x.color||'—'}</td><td class="tname">${resta}${mot}</td></tr>`;}).join('')}</tbody></table>`:'<p class="note">Sin sancionados.</p>';
   const up=document.getElementById('tdataUpd'); if(up)up.textContent='Datos del torneo actualizados: '+(TDATA.updated||'');
+}
+function renderNoticias(){
+  const nb=document.getElementById('newsBox'); if(!nb)return;
+  const n=(TDATA&&TDATA.noticias)||[];
+  nb.innerHTML=n.length?n.map(x=>`<div class="news-item"><div class="news-h">${esc(x.titulo||'')}</div><div class="news-d">${esc(x.fecha||'')}</div>${x.texto?`<p class="news-t">${esc(x.texto)}</p>`:''}</div>`).join(''):'<p class="note">Sin noticias.</p>';
 }
 function renderTeams(){
   const sel=document.getElementById('teamSel'),box=document.getElementById('teamBox');
@@ -1121,14 +1162,15 @@ function renderTeamBox(id){
   box.innerHTML=`<div class="team-head">${t.crest?`<img src="${t.crest}" alt="" onerror="this.style.display='none'">`:''}
     <div><h3 style="margin:0">${esc(t.name)}</h3><p class="note" style="margin:2px 0 0">${rec}</p></div></div>
     <h2 class="rules-title"><i class="fa fa-users"></i> Plantel <span class="role-sub-n">${players.length}</span></h2>
-    <div class="std-scroll"><table class="std"><thead><tr><th class="tname">Jugador</th><th>PJ</th><th>G</th><th>🟨</th><th>🟦</th><th>🟥</th></tr></thead><tbody>${
-      players.length?players.map(p=>`<tr><td class="tname">${esc(p.name||'—')}</td><td>${p.pj}</td><td class="pts">${p.g}</td><td>${p.ya}</td><td>${p.az}</td><td>${p.ro}</td></tr>`).join(''):'<tr><td colspan="6" style="text-align:center;color:var(--muted)">Sin datos de plantel</td></tr>'}</tbody></table></div>
+    <div class="std-scroll"><table class="std"><thead><tr><th></th><th class="tname">Jugador</th><th>PJ</th><th>G</th><th>🟨</th><th>🟦</th><th>🟥</th></tr></thead><tbody>${
+      players.length?players.map(p=>`<tr><td>${p.foto?`<img class="pl-foto" src="${p.foto}" alt="" loading="lazy" onerror="this.style.display='none'">`:'<span class="pl-foto pl-noimg"><i class=\"fa fa-user\"></i></span>'}</td><td class="tname">${esc(p.name||'—')}${p.pos?` <span class="pl-pos">${esc(p.pos)}</span>`:''}</td><td>${p.pj}</td><td class="pts">${p.g}</td><td>${p.ya}</td><td>${p.az}</td><td>${p.ro}</td></tr>`).join(''):'<tr><td colspan="7" style="text-align:center;color:var(--muted)">Sin datos de plantel</td></tr>'}</tbody></table></div>
     <h2 class="rules-title"><i class="fa fa-calendar-days"></i> Partidos</h2>
     <div class="fixture-list">${ms.length?ms.map(m=>{const home=m.homeId===id;const rival=home?m.away:m.home;
       const played=(m.gh!=null&&m.ga!=null);const mine=home?m.gh:m.ga,ot=home?m.ga:m.gh;
       const res=played?`<span class="fx-res ${mine>ot?'w':(mine<ot?'l':'d')}">${mine}-${ot}</span>`:'';
       const dstr=fmtDateStr(m.date);const when=(dstr||m.time)?(dstr+(m.time?(dstr?' · ':'')+m.time:'')):'A definir';
-      return `<div class="fx-row"><span class="fx-badge ${home?'fx-home':'fx-away'}">${home?'L':'V'}</span><span class="fx-match">${esc(t.name)} <span class="fx-vs">vs</span> ${esc(rival)}</span>${res}<span class="fx-when${(dstr||m.time)?'':' fx-tbd'}">${when}</span></div>`;
+      const mp=m.venue?` ${comoLlegar(m.venue)}`:'';
+      return `<div class="fx-row"><span class="fx-badge ${home?'fx-home':'fx-away'}">${home?'L':'V'}</span><span class="fx-match">${esc(t.name)} <span class="fx-vs">vs</span> ${esc(rival)}</span>${res}<span class="fx-when${(dstr||m.time)?'':' fx-tbd'}">${when}</span>${mp}</div>`;
     }).join(''):'<p class="note">Sin partidos.</p>'}</div>`;
 }
 function pad2(n){return String(n).padStart(2,'0');}
@@ -1167,6 +1209,7 @@ function renderMatch(){
       ${match.time?`<span class="mb-chip"><i class="fa fa-futbol"></i> Partido ${match.time}</span>`:''}
       ${match.arrival?`<span class="mb-chip mb-arr"><i class="fa fa-person-walking"></i> Llegada ${match.arrival}</span>`:''}
       ${match.venue?`<span class="mb-venue-txt"><i class="fa fa-location-dot"></i><span class="mb-vcol"><span class="mb-vname">${esc(match.venue)}</span>${v?`<span class="mb-addr">${esc(v.addr)}</span>`:''}</span></span>`:''}
+      ${match.venue?comoLlegar(match.venue):''}
       ${cal?`<a class="btn mb-cal" href="${cal}" target="_blank" rel="noopener"><i class="fa fa-calendar-plus"></i> Agregar al calendario</a>`:''}
     </div>`;
 }
