@@ -1159,6 +1159,20 @@ function renderTeamBox(id){
   const rec=st?`${st.pj} PJ · ${st.pg}G ${st.pe}E ${st.pp}P · GF ${st.gf} · GC ${st.gc}`:'';
   const ms=(TDATA.matches||[]).filter(m=>m.homeId===id||m.awayId===id);
   const players=t.players||[];
+  // head-to-head vs cada rival
+  const h2h={};
+  (TDATA.matches||[]).forEach(m=>{
+    let ot,gf,ga;
+    if(m.homeId===id){ot=m.awayId;gf=m.gh;ga=m.ga;}
+    else if(m.awayId===id){ot=m.homeId;gf=m.ga;ga=m.gh;}
+    else return;
+    const r=h2h[ot]||(h2h[ot]={pj:0,g:0,e:0,p:0,gf:0,gc:0});
+    if(gf!=null&&ga!=null){r.pj++;r.gf+=gf;r.gc+=ga; if(gf>ga)r.g++; else if(gf<ga)r.p++; else r.e++;}
+  });
+  const rivals=(TDATA.teams||[]).filter(x=>x.id!==id).sort((a,b)=>a.name.localeCompare(b.name,'es'));
+  const h2hRows=rivals.map(rv=>{const r=h2h[rv.id]||{pj:0,g:0,e:0,p:0,gf:0,gc:0};
+    const cls=r.pj?(r.g>r.p?'w':(r.g<r.p?'l':'d')):'';
+    return `<tr><td class="tname">${esc(rv.name)}</td><td>${r.pj}</td><td>${r.g}-${r.e}-${r.p}</td><td>${r.gf}:${r.gc}</td><td>${r.pj?`<span class="fx-res ${cls}">${r.gf}-${r.gc}</span>`:'—'}</td></tr>`;}).join('');
   box.innerHTML=`<div class="team-head">${t.crest?`<img src="${t.crest}" alt="" onerror="this.style.display='none'">`:''}
     <div><h3 style="margin:0">${esc(t.name)}</h3><p class="note" style="margin:2px 0 0">${rec}</p></div></div>
     <h2 class="rules-title"><i class="fa fa-users"></i> Plantel <span class="role-sub-n">${players.length}</span></h2>
@@ -1171,7 +1185,9 @@ function renderTeamBox(id){
       const dstr=fmtDateStr(m.date);const when=(dstr||m.time)?(dstr+(m.time?(dstr?' · ':'')+m.time:'')):'A definir';
       const mp=m.venue?` ${comoLlegar(m.venue)}`:'';
       return `<div class="fx-row"><span class="fx-badge ${home?'fx-home':'fx-away'}">${home?'L':'V'}</span><span class="fx-match">${esc(t.name)} <span class="fx-vs">vs</span> ${esc(rival)}</span>${res}<span class="fx-when${(dstr||m.time)?'':' fx-tbd'}">${when}</span>${mp}</div>`;
-    }).join(''):'<p class="note">Sin partidos.</p>'}</div>`;
+    }).join(''):'<p class="note">Sin partidos.</p>'}</div>
+    <h2 class="rules-title"><i class="fa fa-arrows-left-right"></i> Head to head</h2>
+    <div class="std-scroll"><table class="std"><thead><tr><th class="tname">Rival</th><th>PJ</th><th>G-E-P</th><th>GF:GC</th><th>Resultado</th></tr></thead><tbody>${h2hRows}</tbody></table></div>`;
 }
 function pad2(n){return String(n).padStart(2,'0');}
 function gcalHref(){
