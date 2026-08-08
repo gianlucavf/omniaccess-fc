@@ -454,7 +454,17 @@ html.light .mb-field input,html.light .mb-field select{color-scheme:light}
 .squad-group{ margin-bottom:14px; }
 
 /* ===== Optimización móvil ===== */
+.sub-team{display:none}
+.hide-sm{}
 @media (max-width:640px){
+  /* tablas: caben al ancho, sin scroll horizontal */
+  .std{ min-width:0 !important; width:100%; }
+  .std-scroll{ overflow-x:visible; }
+  .std th, .std td{ padding:7px 5px; font-size:11.5px; }
+  .std .tname{ white-space:normal; word-break:break-word; line-height:1.2; }
+  .hide-sm{ display:none !important; }
+  .sub-team{ display:block; font-size:10px; color:var(--subhead); font-weight:400; }
+  .pl-foto{ width:28px; height:28px; }
   .wrap{ padding:12px; }
   .header{ padding:12px 14px; }
   .brand-title{ font-size:20px; letter-spacing:1px; }
@@ -1120,8 +1130,8 @@ function renderExtras(){
   const gb=document.getElementById('goleBox'),vb=document.getElementById('vallaBox'),tb=document.getElementById('tarjBox');
   if(!gb)return; if(!TDATA){gb.innerHTML='<p class="note">Sin datos aún.</p>';return;}
   const g=TDATA.goleadores||[];
-  gb.innerHTML=g.length?`<table class="std"><thead><tr><th>#</th><th class="tname">Jugador</th><th class="tname">Equipo</th><th>Goles</th></tr></thead><tbody>${
-    g.slice(0,25).map((x,i)=>`<tr class="${isOA(x.team)?'us':''}"><td class="pos">${i+1}</td><td class="tname">${esc(x.name||'—')}</td><td class="tname">${esc(x.team||'')}</td><td class="pts">${x.g}</td></tr>`).join('')}</tbody></table>`:'<p class="note">Sin goles registrados aún.</p>';
+  gb.innerHTML=g.length?`<table class="std"><thead><tr><th>#</th><th class="tname">Jugador</th><th class="tname hide-sm">Equipo</th><th>Goles</th></tr></thead><tbody>${
+    g.slice(0,25).map((x,i)=>`<tr class="${isOA(x.team)?'us':''}"><td class="pos">${i+1}</td><td class="tname">${esc(x.name||'—')}${x.team?`<span class="sub-team">${esc(x.team)}</span>`:''}</td><td class="tname hide-sm">${esc(x.team||'')}</td><td class="pts">${x.g}</td></tr>`).join('')}</tbody></table>`:'<p class="note">Sin goles registrados aún.</p>';
   const v=TDATA.valla||[];
   vb.innerHTML=v.length?`<table class="std"><thead><tr><th>#</th><th class="tname">Equipo</th><th>GC</th><th>PJ</th></tr></thead><tbody>${
     v.slice(0,10).map((x,i)=>`<tr class="${isOA(x.team)?'us':''}"><td class="pos">${i+1}</td><td class="tname">${esc(x.team)}</td><td>${x.gc}</td><td>${x.pj}</td></tr>`).join('')}</tbody></table>`:'<p class="note">Sin datos.</p>';
@@ -1172,12 +1182,12 @@ function renderTeamBox(id){
   const rivals=(TDATA.teams||[]).filter(x=>x.id!==id).sort((a,b)=>a.name.localeCompare(b.name,'es'));
   const h2hRows=rivals.map(rv=>{const r=h2h[rv.id]||{pj:0,g:0,e:0,p:0,gf:0,gc:0};
     const cls=r.pj?(r.g>r.p?'w':(r.g<r.p?'l':'d')):'';
-    return `<tr><td class="tname">${esc(rv.name)}</td><td>${r.pj}</td><td>${r.g}-${r.e}-${r.p}</td><td>${r.gf}:${r.gc}</td><td>${r.pj?`<span class="fx-res ${cls}">${r.gf}-${r.gc}</span>`:'—'}</td></tr>`;}).join('');
+    return `<tr><td class="tname">${esc(rv.name)}</td><td>${r.pj}</td><td>${r.g}-${r.e}-${r.p}</td><td>${r.gf}:${r.gc}</td><td class="hide-sm">${r.pj?`<span class="fx-res ${cls}">${r.gf}-${r.gc}</span>`:'—'}</td></tr>`;}).join('');
   box.innerHTML=`<div class="team-head">${t.crest?`<img src="${t.crest}" alt="" onerror="this.style.display='none'">`:''}
     <div><h3 style="margin:0">${esc(t.name)}</h3><p class="note" style="margin:2px 0 0">${rec}</p></div></div>
     <h2 class="rules-title"><i class="fa fa-users"></i> Plantel <span class="role-sub-n">${players.length}</span></h2>
-    <div class="std-scroll"><table class="std"><thead><tr><th></th><th class="tname">Jugador</th><th>PJ</th><th>G</th><th>🟨</th><th>🟦</th><th>🟥</th></tr></thead><tbody>${
-      players.length?players.map(p=>`<tr><td>${p.foto?`<img class="pl-foto" src="${p.foto}" alt="" loading="lazy" onerror="this.style.display='none'">`:'<span class="pl-foto pl-noimg"><i class=\"fa fa-user\"></i></span>'}</td><td class="tname">${esc(p.name||'—')}${p.pos?` <span class="pl-pos">${esc(p.pos)}</span>`:''}</td><td>${p.pj}</td><td class="pts">${p.g}</td><td>${p.ya}</td><td>${p.az}</td><td>${p.ro}</td></tr>`).join(''):'<tr><td colspan="7" style="text-align:center;color:var(--muted)">Sin datos de plantel</td></tr>'}</tbody></table></div>
+    <div class="std-scroll"><table class="std"><thead><tr><th></th><th class="tname">Jugador</th><th class="hide-sm">PJ</th><th>G</th><th>🟨</th><th>🟦</th><th>🟥</th></tr></thead><tbody>${
+      players.length?players.map(p=>`<tr><td>${p.foto?`<img class="pl-foto" src="${p.foto}" alt="" loading="lazy" onerror="this.style.display='none'">`:'<span class="pl-foto pl-noimg"><i class=\"fa fa-user\"></i></span>'}</td><td class="tname">${esc(p.name||'—')}${p.pos?` <span class="pl-pos">${esc(p.pos)}</span>`:''}</td><td class="hide-sm">${p.pj}</td><td class="pts">${p.g}</td><td>${p.ya}</td><td>${p.az}</td><td>${p.ro}</td></tr>`).join(''):'<tr><td colspan="7" style="text-align:center;color:var(--muted)">Sin datos de plantel</td></tr>'}</tbody></table></div>
     <h2 class="rules-title"><i class="fa fa-calendar-days"></i> Partidos</h2>
     <div class="fixture-list">${ms.length?ms.map(m=>{const home=m.homeId===id;const rival=home?m.away:m.home;
       const played=(m.gh!=null&&m.ga!=null);const mine=home?m.gh:m.ga,ot=home?m.ga:m.gh;
@@ -1187,7 +1197,7 @@ function renderTeamBox(id){
       return `<div class="fx-row"><span class="fx-badge ${home?'fx-home':'fx-away'}">${home?'L':'V'}</span><span class="fx-match">${esc(t.name)} <span class="fx-vs">vs</span> ${esc(rival)}</span>${res}<span class="fx-when${(dstr||m.time)?'':' fx-tbd'}">${when}</span>${mp}</div>`;
     }).join(''):'<p class="note">Sin partidos.</p>'}</div>
     <h2 class="rules-title"><i class="fa fa-arrows-left-right"></i> Head to head</h2>
-    <div class="std-scroll"><table class="std"><thead><tr><th class="tname">Rival</th><th>PJ</th><th>G-E-P</th><th>GF:GC</th><th>Resultado</th></tr></thead><tbody>${h2hRows}</tbody></table></div>`;
+    <div class="std-scroll"><table class="std"><thead><tr><th class="tname">Rival</th><th>PJ</th><th>G-E-P</th><th>GF:GC</th><th class="hide-sm">Resultado</th></tr></thead><tbody>${h2hRows}</tbody></table></div>`;
 }
 function pad2(n){return String(n).padStart(2,'0');}
 function gcalHref(){
@@ -1239,9 +1249,9 @@ const stdTable=document.getElementById('stdTable');
 function renderStandings(){
   const rows=standings.map(t=>{const pts=3*(+t.pg||0)+(+t.pe||0),dg=(+t.gf||0)-(+t.gc||0);return {...t,pts,dg};});
   rows.sort((a,b)=>b.pts-a.pts||b.dg-a.dg||b.gf-a.gf);
-  stdTable.innerHTML=`<table class="std"><thead><tr><th>#</th><th class="tname">Equipo</th><th>PJ</th><th>PG</th><th>PE</th><th>PP</th><th>GF</th><th>GC</th><th>DG</th><th>Pts</th></tr></thead><tbody>${
+  stdTable.innerHTML=`<table class="std"><thead><tr><th>#</th><th class="tname">Equipo</th><th>PJ</th><th class="hide-sm">PG</th><th class="hide-sm">PE</th><th class="hide-sm">PP</th><th class="hide-sm">GF</th><th class="hide-sm">GC</th><th>DG</th><th>Pts</th></tr></thead><tbody>${
     rows.map((t,i)=>{const us=t.name==='OmniAccess FC';const dg=t.dg>0?'+'+t.dg:(t.dg<0?'−'+Math.abs(t.dg):'0');
-      return `<tr class="${us?'us':''}"><td class="pos">${i+1}</td><td class="tname">${esc(t.name)}</td><td>${t.pj||0}</td><td>${t.pg||0}</td><td>${t.pe||0}</td><td>${t.pp||0}</td><td>${t.gf||0}</td><td>${t.gc||0}</td><td>${dg}</td><td class="pts">${t.pts}</td></tr>`;}).join('')}</tbody></table>`;
+      return `<tr class="${us?'us':''}"><td class="pos">${i+1}</td><td class="tname">${esc(t.name)}</td><td>${t.pj||0}</td><td class="hide-sm">${t.pg||0}</td><td class="hide-sm">${t.pe||0}</td><td class="hide-sm">${t.pp||0}</td><td class="hide-sm">${t.gf||0}</td><td class="hide-sm">${t.gc||0}</td><td>${dg}</td><td class="pts">${t.pts}</td></tr>`;}).join('')}</tbody></table>`;
 }
 stdTable.addEventListener('input',e=>{const inp=e.target.closest('.cell-inp');if(!inp)return;
   const i=+inp.dataset.i,k=inp.dataset.k;
