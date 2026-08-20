@@ -107,7 +107,7 @@ select.pill{appearance:none;background:var(--card-bg);border:1px solid var(--div
 /* ── Formation layout: pitch + squad/bench sidebar ── */
 .formation-layout{display:grid;grid-template-columns:auto minmax(0,1fr);gap:18px;align-items:start}
 @media (max-width:1000px){.formation-layout{grid-template-columns:1fr}}
-.lists-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;align-items:start}
+.lists-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;align-items:start}
 .col-stack{display:flex;flex-direction:column;gap:16px}
 .lists-grid .bench-list{min-height:60px}
 @media (max-width:760px){.lists-grid{grid-template-columns:repeat(2,1fr)}}
@@ -592,6 +592,10 @@ html.light .mb-field input,html.light .mb-field select{color-scheme:light}
               <div class="bench-list" id="dtList"></div>
             </div>
             <div class="squad-group">
+              <div class="bench-head head-injured">Lesionados <span class="bench-count" id="injuredCount"></span></div>
+              <div class="bench-list" id="injuredList"></div>
+            </div>
+            <div class="squad-group">
               <div class="bench-head head-pitch">En el campo <span class="bench-count" id="startCount"></span></div>
               <div class="squad-list" id="startList"></div>
             </div>
@@ -603,10 +607,6 @@ html.light .mb-field input,html.light .mb-field select{color-scheme:light}
           <div class="squad-group">
             <div class="bench-head head-reserve">Reserva <span class="bench-count" id="reserveCount"></span></div>
             <div class="bench-list" id="reserveList"></div>
-          </div>
-          <div class="squad-group">
-            <div class="bench-head head-injured">Lesionados <span class="bench-count" id="injuredCount"></span></div>
-            <div class="bench-list" id="injuredList"></div>
           </div>
         </div>
       </aside>
