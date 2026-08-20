@@ -24,7 +24,7 @@
   /* colores por posición */
   --pos-gk:#eab308; --pos-def:#3b82f6; --pos-mid:#22c55e; --pos-fwd:#ef4444;
   /* colores por sección */
-  --sec-pitch:#22c55e; --sec-bench:#38bdf8; --sec-reserve:#eab308; --sec-dt:#a855f7;
+  --sec-pitch:#22c55e; --sec-bench:#38bdf8; --sec-reserve:#eab308; --sec-dt:#a855f7; --sec-injured:#ef4444;
 }
 html.light{
   --background:#f4f6fa; --surface:#ffffff; --foreground:#0b1220; --body-color:#33425a;
@@ -107,7 +107,7 @@ select.pill{appearance:none;background:var(--card-bg);border:1px solid var(--div
 /* ── Formation layout: pitch + squad/bench sidebar ── */
 .formation-layout{display:grid;grid-template-columns:auto minmax(0,1fr);gap:18px;align-items:start}
 @media (max-width:1000px){.formation-layout{grid-template-columns:1fr}}
-.lists-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;align-items:start}
+.lists-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;align-items:start}
 .col-stack{display:flex;flex-direction:column;gap:16px}
 .lists-grid .bench-list{min-height:60px}
 @media (max-width:760px){.lists-grid{grid-template-columns:repeat(2,1fr)}}
@@ -303,10 +303,12 @@ thead th{ background:rgba(255,255,255,.02); }
 .head-bench::before{ background:var(--sec-bench); }
 .head-reserve::before{ background:var(--sec-reserve); }
 .head-dt::before{ background:var(--sec-dt); }
+.head-injured::before{ background:var(--sec-injured); }
 .head-pitch .bench-count{ color:var(--sec-pitch); background:rgba(34,197,94,.14); }
 .head-bench .bench-count{ color:var(--sec-bench); background:rgba(56,189,248,.14); }
 .head-reserve .bench-count{ color:var(--sec-reserve); background:rgba(234,179,8,.14); }
 .head-dt .bench-count{ color:var(--sec-dt); background:rgba(168,85,247,.14); }
+.head-injured .bench-count{ color:var(--sec-injured); background:rgba(239,68,68,.14); }
 /* subsecciones (Porteros/Defensores/Medios/Delanteros) tintadas por posición */
 .role-sec[data-role="GK"]{ box-shadow:inset 3px 0 0 var(--pos-gk); }
 .role-sec[data-role="DEF"]{ box-shadow:inset 3px 0 0 var(--pos-def); }
@@ -602,6 +604,10 @@ html.light .mb-field input,html.light .mb-field select{color-scheme:light}
             <div class="bench-head head-reserve">Reserva <span class="bench-count" id="reserveCount"></span></div>
             <div class="bench-list" id="reserveList"></div>
           </div>
+          <div class="squad-group">
+            <div class="bench-head head-injured">Lesionados <span class="bench-count" id="injuredCount"></span></div>
+            <div class="bench-list" id="injuredList"></div>
+          </div>
         </div>
       </aside>
     </div>
@@ -793,7 +799,7 @@ html.light .mb-field input,html.light .mb-field select{color-scheme:light}
       <h3>OmniAccess FC</h3>
       <p>Alineación del equipo en formato fútbol 8 (portero + 7). Copa SEPTEN 2026 · División C.</p>
       <p class="note">El administrador pulsa “Editar”, cambia de formación (3-3-1, 3-2-2, 2-3-2, 2-4-1, 3-1-3)
-         y arrastra jugadores entre el campo, el banco y la reserva para armar la alineación; al pulsar
+         y arrastra jugadores entre el campo, el banco, la reserva y lesionados para armar la alineación; al pulsar
          “Guardar para todos” queda visible para el resto del equipo.</p>
     </div>
   </section>
@@ -857,6 +863,7 @@ let FORMATION='331';
 let lineup=[];
 let reserve=new Set();
 let dt=new Set();
+let injured=new Set();
 let match={rival:'',date:'',time:'',arrival:'',venue:''};
 const cleanMatch=m=>(m&&typeof m==='object')?{rival:m.rival||'',date:m.date||'',time:m.time||'',arrival:m.arrival||'',venue:m.venue||''}:{rival:'',date:'',time:'',arrival:'',venue:''};
 /* canchas del torneo (para el desplegable) */
@@ -888,20 +895,21 @@ let fixture=[
 ];
 function cleanFixture(a){ return Array.isArray(a)?a.map(f=>FX(String(f.rival||''),!!f.home,f.date,f.time,f.arrival,f.venue,f.gf,f.gc)):fixture; }
 const byId=id=>SQUAD.find(p=>p.id===id);
-function save(){try{localStorage.setItem('oafc_lineup',JSON.stringify({f:FORMATION,l:lineup,r:[...reserve],d:[...dt],m:match,std:standings,fx:fixture}))}catch(e){}}
+function save(){try{localStorage.setItem('oafc_lineup',JSON.stringify({f:FORMATION,l:lineup,r:[...reserve],d:[...dt],inj:[...injured],m:match,std:standings,fx:fixture}))}catch(e){}}
 function loadState(){try{const d=JSON.parse(localStorage.getItem('oafc_lineup'));
   if(d&&Array.isArray(d.l)&&d.l.length===NSLOTS){FORMATION=(d.f in FORMATIONS)?d.f:'331';
     lineup=d.l.map(x=>(x!=null&&SQUAD.some(p=>p.id===x))?x:null);
     dt=new Set((d.d||[]).filter(x=>SQUAD.some(p=>p.id===x)&&!lineup.includes(x)));
     reserve=new Set((d.r||[]).filter(x=>SQUAD.some(p=>p.id===x)&&!lineup.includes(x)&&!dt.has(x)));
+    injured=new Set((d.inj||[]).filter(x=>SQUAD.some(p=>p.id===x)&&!lineup.includes(x)&&!dt.has(x)&&!reserve.has(x)));
     match=cleanMatch(d.m); if(Array.isArray(d.std))standings=cleanStandings(d.std);
     if(Array.isArray(d.fx))fixture=cleanFixture(d.fx);return;}}catch(e){}
-  FORMATION='331'; lineup=SQUAD.slice(0,NSLOTS).map(p=>p.id); reserve=new Set(); dt=new Set(); match={date:'',time:'',venue:''};}
+  FORMATION='331'; lineup=SQUAD.slice(0,NSLOTS).map(p=>p.id); reserve=new Set(); dt=new Set(); injured=new Set(); match={date:'',time:'',venue:''};}
 
 /* ── shared state via Google Apps Script (read public / write with admin pass) ── */
 const API_URL='https://script.google.com/macros/s/AKfycbwn9Jt7RrUug-c8z3P0ihghap3iXM9zyZFwOxMLe7OAIgs2U2qsfbwqd2Gi6-K0ZhRE2g/exec';
 let lineupEditing=false, adminPass=null;
-function currentState(){return {f:FORMATION,l:lineup,r:[...reserve],d:[...dt],m:match,std:standings,fx:fixture,squad:SQUAD};}
+function currentState(){return {f:FORMATION,l:lineup,r:[...reserve],d:[...dt],inj:[...injured],m:match,std:standings,fx:fixture,squad:SQUAD};}
 function applyState(s){
   if(!s||!Array.isArray(s.l))return false;
   if(Array.isArray(s.squad)&&s.squad.length){
@@ -911,6 +919,7 @@ function applyState(s){
   lineup=(s.l.length===NSLOTS?s.l:SQUAD.slice(0,NSLOTS).map(p=>p.id)).map(x=>(x!=null&&SQUAD.some(p=>p.id===x))?x:null);
   dt=new Set((s.d||[]).filter(x=>SQUAD.some(p=>p.id===x)&&!lineup.includes(x)));
   reserve=new Set((s.r||[]).filter(x=>SQUAD.some(p=>p.id===x)&&!lineup.includes(x)&&!dt.has(x)));
+  injured=new Set((s.inj||[]).filter(x=>SQUAD.some(p=>p.id===x)&&!lineup.includes(x)&&!dt.has(x)&&!reserve.has(x)));
   match=cleanMatch(s.m);
   if(Array.isArray(s.std))standings=cleanStandings(s.std);
   if(Array.isArray(s.fx))fixture=cleanFixture(s.fx);
@@ -972,6 +981,7 @@ const benchList=document.getElementById('benchList');
 const startList=document.getElementById('startList');
 const reserveList=document.getElementById('reserveList');
 const dtList=document.getElementById('dtList');
+const injuredList=document.getElementById('injuredList');
 /* categoría de posición (para color) a partir de la etiqueta del slot */
 function posCat(lbl){ if(lbl==='POR')return'gk'; if(lbl==='LD'||lbl==='DFC'||lbl==='LI')return'def';
   if(lbl==='MD'||lbl==='MC'||lbl==='MI')return'mid'; return'fwd'; }
@@ -1010,9 +1020,15 @@ function renderLists(){
   dtList.innerHTML=staff.length?staff.map(p=>
     `<div class="bench-item" draggable="true" data-pid="${p.id}"><span class="num-badge">${p.n}</span><span class="bname">${p.name}</span></div>`).join('')
     :'<div class="bench-empty">Arrastra aquí al DT</div>';
-  // Bench = rest of the squad (no pitch, no reserve, no DT)
+  // Lesionados
+  const inj=SQUAD.filter(p=>injured.has(p.id));
+  document.getElementById('injuredCount').textContent=inj.length;
+  injuredList.innerHTML=inj.length?inj.map(p=>
+    `<div class="bench-item" draggable="true" data-pid="${p.id}"><span class="num-badge">${p.n}</span><span class="bname">${p.name}</span></div>`).join('')
+    :'<div class="bench-empty">Arrastra aquí a los lesionados</div>';
+  // Bench = rest of the squad (no pitch, no reserve, no DT, no injured)
   const onPitch=new Set(lineup.filter(x=>x!=null));
-  const subs=SQUAD.filter(p=>!onPitch.has(p.id)&&!reserve.has(p.id)&&!dt.has(p.id));
+  const subs=SQUAD.filter(p=>!onPitch.has(p.id)&&!reserve.has(p.id)&&!dt.has(p.id)&&!injured.has(p.id));
   document.getElementById('benchCount').textContent=subs.length;
   benchList.innerHTML=roleSectionsHTML(subs,'bench');
   const resv=SQUAD.filter(p=>reserve.has(p.id));
@@ -1053,11 +1069,11 @@ function renderSquad(){
     updateSortArrows(); return;
   }
   let rows=SQUAD.map(p=>{
-    const role=roleOf[p.id], starter=!!role, resv=reserve.has(p.id), isdt=dt.has(p.id);
-    const posLabel=isdt?'DT':(starter?role:roleAb(p.role));
-    const posRank=isdt?9:(starter?(CATRANK[posCat(role)]??2):(ROLERANK[p.role]??2));
-    const estado=isdt?'Cuerpo técnico':(starter?'Titular':(resv?'Reserva':'Suplente'));
-    const statusRank=isdt?3:(starter?0:(resv?2:1));
+    const role=roleOf[p.id], starter=!!role, resv=reserve.has(p.id), isdt=dt.has(p.id), isinj=injured.has(p.id);
+    const posLabel=isdt?'DT':(isinj?'LES':(starter?role:roleAb(p.role)));
+    const posRank=isdt?9:(isinj?10:(starter?(CATRANK[posCat(role)]??2):(ROLERANK[p.role]??2)));
+    const estado=isdt?'Cuerpo técnico':(isinj?'Lesionado':(starter?'Titular':(resv?'Reserva':'Suplente')));
+    const statusRank=isdt?3:(isinj?4:(starter?0:(resv?2:1)));
     return {p,starter,posLabel,posRank,estado,statusRank};
   });
   if(squadSort.key){const k=squadSort.key,d=squadSort.dir;
@@ -1269,7 +1285,7 @@ let drag=null;   // {pid, from:'bench'|'pitch'|'reserve', slot}
 function dropOnSlot(j){
   if(!drag||!lineupEditing)return;
   if(drag.from==='pitch'){ const i=drag.slot; const t=lineup[j]; lineup[j]=lineup[i]; lineup[i]=t; } // swap positions
-  else{ lineup[j]=drag.pid; reserve.delete(drag.pid); dt.delete(drag.pid); } // occupant (if any) auto-returns to bench
+  else{ lineup[j]=drag.pid; reserve.delete(drag.pid); dt.delete(drag.pid); injured.delete(drag.pid); } // occupant (if any) auto-returns to bench
   drag=null; renderAll();
 }
 function dropOnBench(){
@@ -1277,18 +1293,25 @@ function dropOnBench(){
   if(drag.from==='pitch') lineup[drag.slot]=null;
   else if(drag.from==='reserve') reserve.delete(drag.pid);
   else if(drag.from==='dt') dt.delete(drag.pid);
+  else if(drag.from==='injured') injured.delete(drag.pid);
   drag=null; renderAll();
 }
 function dropOnReserve(){
   if(!drag||!lineupEditing)return;
   if(drag.from==='pitch') lineup[drag.slot]=null;
-  dt.delete(drag.pid); reserve.add(drag.pid);
+  dt.delete(drag.pid); injured.delete(drag.pid); reserve.add(drag.pid);
   drag=null; renderAll();
 }
 function dropOnDT(){
   if(!drag||!lineupEditing)return;
   if(drag.from==='pitch') lineup[drag.slot]=null;
-  reserve.delete(drag.pid); dt.add(drag.pid);
+  reserve.delete(drag.pid); injured.delete(drag.pid); dt.add(drag.pid);
+  drag=null; renderAll();
+}
+function dropOnInjured(){
+  if(!drag||!lineupEditing)return;
+  if(drag.from==='pitch') lineup[drag.slot]=null;
+  reserve.delete(drag.pid); dt.delete(drag.pid); injured.add(drag.pid);
   drag=null; renderAll();
 }
 /* drop onto a position section of bench/reserve: sets the player's role + column */
@@ -1296,7 +1319,7 @@ function dropOnSection(listName,role){
   if(!drag||!lineupEditing)return; const p=byId(drag.pid); if(!p){drag=null;return;}
   if(ROLE_KEYS.includes(role)) p.role=role;
   if(drag.from==='pitch') lineup[drag.slot]=null;
-  dt.delete(p.id);
+  dt.delete(p.id); injured.delete(p.id);
   if(listName==='reserve') reserve.add(p.id); else reserve.delete(p.id);
   saveSquad(); drag=null; renderAll();
 }
@@ -1321,6 +1344,12 @@ dtList.addEventListener('dragstart',e=>{const it=e.target.closest('.bench-item')
 dtList.addEventListener('dragover',e=>{e.preventDefault();dtList.classList.add('dragover');});
 dtList.addEventListener('dragleave',e=>{if(!dtList.contains(e.relatedTarget))dtList.classList.remove('dragover');});
 dtList.addEventListener('drop',e=>{e.preventDefault();dtList.classList.remove('dragover');dropOnDT();});
+/* Lesionados: draggable items (source=injured) and a plain drop zone */
+injuredList.addEventListener('dragstart',e=>{const it=e.target.closest('.bench-item');if(!it)return;
+  if(!lineupEditing)return;drag={pid:+it.dataset.pid,from:'injured'};e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain',it.dataset.pid);});
+injuredList.addEventListener('dragover',e=>{e.preventDefault();injuredList.classList.add('dragover');});
+injuredList.addEventListener('dragleave',e=>{if(!injuredList.contains(e.relatedTarget))injuredList.classList.remove('dragover');});
+injuredList.addEventListener('drop',e=>{e.preventDefault();injuredList.classList.remove('dragover');dropOnInjured();});
 /* per-position section drop zones (bench & reserve) */
 [benchList,reserveList].forEach(list=>{
   list.addEventListener('dragover',e=>{const sec=e.target.closest('.role-sec');if(!sec)return;e.preventDefault();sec.classList.add('dragover');});
@@ -1396,7 +1425,7 @@ squadBodyEl.addEventListener('input',e=>{const inp=e.target.closest('.cell-inp')
   saveSquad(); renderPitch(); renderLists();});   // live-update pitch & lists, keep the input focused
 squadBodyEl.addEventListener('click',e=>{const del=e.target.closest('.row-del');if(!del)return;
   const rem=SQUAD[+del.dataset.del]; SQUAD.splice(+del.dataset.del,1);
-  const li=lineup.indexOf(rem.id); if(li>-1)lineup[li]=null; reserve.delete(rem.id); dt.delete(rem.id);
+  const li=lineup.indexOf(rem.id); if(li>-1)lineup[li]=null; reserve.delete(rem.id); dt.delete(rem.id); injured.delete(rem.id);
   saveSquad(); renderAll();});
 
 /* tabs */
